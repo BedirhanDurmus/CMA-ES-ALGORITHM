@@ -680,16 +680,16 @@ def api_airfield():
     data = request.get_json(force=True) or {}
     try:
         seed = int(data.get("seed", 42))
-        difficulty = str(data.get("difficulty", "medium")).lower()
-        n_iter = int(data.get("n_iter", 25))
-        max_steps = int(data.get("max_steps", 100))
+        difficulty = str(data.get("difficulty", "easy")).lower()
+        n_iter = int(data.get("n_iter", 18))
+        max_steps = int(data.get("max_steps", 80))
     except (TypeError, ValueError) as exc:
         return jsonify({"error": f"bad parameters: {exc}"}), 400
 
-    n_iter = max(3, min(n_iter, 80))
+    n_iter = max(3, min(n_iter, 50))
     max_steps = max(30, min(max_steps, 200))
     if difficulty not in ("easy", "medium", "hard"):
-        difficulty = "medium"
+        difficulty = "easy"
 
     map_data = make_airfield_map(seed=seed, difficulty=difficulty)
     result = optimize_airfield(

@@ -850,16 +850,31 @@
   // API
   // ------------------------------------------------------------
   async function fetchRun() {
+    const nIter = Math.max(5, Math.min(parseInt(els.iter.value || "18", 10), 40));
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 45000);
     const body = {
       seed: parseInt(els.seed.value || "42", 10),
-      difficulty: els.difficulty.value || "medium",
-      n_iter: parseInt(els.iter.value || "25", 10),
+      difficulty: els.difficulty.value || "easy",
+      n_iter: nIter,
+      max_steps: 80,
     };
-    const resp = await fetch("/api/airfield-cma", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    let resp;
+    try {
+      resp = await fetch("/api/airfield-cma", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: ctrl.signal,
+      });
+    } catch (err) {
+      if (err && err.name === "AbortError") {
+        throw new Error("İstek zaman aşımına uğradı. İterasyon sayısını düşürüp tekrar deneyin.");
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
     if (!resp.ok) {
       const txt = await resp.text().catch(() => "");
       throw new Error(`HTTP ${resp.status}: ${txt || resp.statusText}`);

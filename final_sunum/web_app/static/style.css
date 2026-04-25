@@ -428,6 +428,74 @@ html, body {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+@media (max-width: 980px) {
+  .plots-row { grid-template-columns: 1fr; }
+  .main-panel { overflow-y: auto; overflow-x: hidden; }
+  .plot-wrap { gap: 10px; }
+  .plot-heading { justify-content: space-between; }
+  .plot { min-height: 280px; }
+}
+@media (max-width: 640px) {
+  .app-layout { padding: 8px 10px 12px; gap: 8px; }
+  .glass-card { padding: 10px 10px; border-radius: 12px; }
+  .plot-wrap { padding: 10px 10px 12px; border-radius: 12px; }
+  .plot-title { font-size: 13px; }
+  .plot-badge { font-size: 10px; padding: 4px 8px; }
+  .plot { min-height: 320px; border-radius: 10px; }
+  .frame-scrubber { gap: 8px; padding: 8px 10px; }
+  .frame-label { min-width: 58px; font-size: 11px; }
+}
+@media (max-width: 760px) {
+  html, body {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .app-root {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  .app-layout {
+    grid-template-columns: 1fr !important;
+    overflow: visible;
+    align-items: start;
+  }
+  .sidebar,
+  .main-panel {
+    height: auto;
+    overflow: visible;
+  }
+  .sidebar {
+    order: 1;
+    gap: 10px;
+  }
+  .main-panel {
+    order: 2;
+    gap: 10px;
+  }
+  .conv-plot { height: 150px; }
+  .plot-wrap {
+    width: 100%;
+    margin: 0;
+  }
+  .plot {
+    min-height: 720px;
+    height: 108vh;
+    max-height: 920px;
+  }
+  .frame-scrubber {
+    position: static;
+    z-index: 0;
+  }
+}
+@media (max-width: 420px) {
+  .plot {
+    min-height: 680px;
+    height: 104vh;
+  }
+}
 
 .plot-wrap {
   display: flex;
@@ -477,6 +545,33 @@ html, body {
   background: rgba(10, 18, 32, 0.62);
   border: 1px solid rgba(100, 120, 180, 0.20);
   overflow: hidden;
+}
+/* Plotly konteynerleri mobilde küçük kalmasın */
+@media (max-width: 760px) {
+  #plot2d,
+  #plot3d,
+  .plot {
+    min-height: 720px !important;
+    height: 108vh !important;
+    max-height: 920px !important;
+  }
+  #plot2d .plot-container,
+  #plot3d .plot-container,
+  #plot2d .svg-container,
+  #plot3d .svg-container,
+  #plot2d .js-plotly-plot,
+  #plot3d .js-plotly-plot {
+    height: 100% !important;
+    min-height: 720px !important;
+  }
+}
+@media (max-width: 420px) {
+  #plot2d,
+  #plot3d,
+  .plot {
+    min-height: 680px !important;
+    height: 104vh !important;
+  }
 }
 
 /* =========================================================
@@ -529,7 +624,7 @@ html, body {
 }
 
 /* =========================================================
-   SPLASH
+   SPLASH — foto carousel
    ========================================================= */
 .splash {
   position: fixed;
@@ -537,305 +632,180 @@ html, body {
   z-index: 9999;
   overflow: hidden;
   color: #eaf1ff;
+  background-color: #03050c;
   animation: splashIn 0.55s ease-out;
-  /* Radial katmanlardaki transparent bölgeler body/app arka planını göstermesin */
-  background-color: #050810;
   isolation: isolate;
 }
 .splash.hide {
-  opacity: 0; transform: scale(1.01);
+  opacity: 0;
+  transform: scale(1.01);
   transition: opacity 0.65s ease, transform 0.65s ease;
   pointer-events: none;
 }
 @keyframes splashIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* Arka plan: birden fazla “sahne”, yalnızca opaklıkla yumuşak geçiş (slayt UI yok) */
-.splash-bg-stack {
+/* Carousel katmanları (iki slot, crossfade) */
+.splash-carousel {
   position: absolute;
   inset: 0;
   z-index: 0;
   overflow: hidden;
-  pointer-events: none;
-  background-color: #050810;
+  background: #03050c;
 }
-.splash-bg-layer {
+.splash-slide {
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 3.2s ease-in-out;
-  will-change: opacity;
+  background-color: #03050c;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  transform: scale(1);
+  transition: opacity 1.1s ease, filter 1.1s ease;
+  will-change: opacity, transform;
+  filter: saturate(1.05) contrast(1.02);
 }
-.splash-bg-layer::after {
-  content: attr(data-fn);
-  position: absolute;
-  right: 24px;
-  top: 22px;
-  font-size: clamp(14px, 2vw, 24px);
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  color: rgba(210, 228, 255, 0.18);
-  text-shadow: 0 0 14px rgba(120, 180, 255, 0.25);
-  pointer-events: none;
-}
-.splash-bg-layer.is-active {
+.splash-slide.is-active {
   opacity: 1;
+  animation: splashKenBurns 9.5s ease-in-out forwards;
+}
+/* Her geçişte yön değişsin */
+.splash-slide.is-active.kb-a { animation-name: splashKenBurnsA; }
+.splash-slide.is-active.kb-b { animation-name: splashKenBurnsB; }
+.splash-slide.is-active.kb-c { animation-name: splashKenBurnsC; }
+.splash-slide.is-active.kb-d { animation-name: splashKenBurnsD; }
+
+@keyframes splashKenBurnsA {
+  0%   { transform: scale(1.00) translate(0%, 0%); }
+  100% { transform: scale(1.02) translate(-0.8%, -0.5%); }
+}
+@keyframes splashKenBurnsB {
+  0%   { transform: scale(1.00) translate(0%, 0%); }
+  100% { transform: scale(1.02) translate(0.7%, -0.5%); }
+}
+@keyframes splashKenBurnsC {
+  0%   { transform: scale(1.00) translate(-0.5%, 0.4%); }
+  100% { transform: scale(1.02) translate(0.7%, 0.9%); }
+}
+@keyframes splashKenBurnsD {
+  0%   { transform: scale(1.00) translate(0.5%, -0.4%); }
+  100% { transform: scale(1.02) translate(-0.7%, 0.8%); }
+}
+@keyframes splashKenBurns {
+  0%   { transform: scale(1.00); }
+  100% { transform: scale(1.02); }
 }
 
-.splash-bg-base {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-/* Benchmark arka planı: opak taban + üstte SVG peyzaj (splash-fn-art) */
-.splash-fn-art {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 135%;
-  height: 135%;
-  transform: translate(-50%, -50%);
-  opacity: 0.95;
-  mix-blend-mode: normal;
-  pointer-events: none;
-  filter: saturate(1.5) contrast(1.28) brightness(1.2);
-  animation: splashArtPulse 5.8s ease-in-out infinite;
-}
-.splash-bg-layer.is-active .splash-fn-art {
-  opacity: 1;
-}
-
-@keyframes splashArtPulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -50%) scale(1.02); }
-}
-
-/* Gömülü <symbol> tanımları — ekranda yer kaplamasın */
-.splash-bench-sprite {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-/* ① Sphere — yumuşak kase */
-.splash-bg-layer--0 .splash-bg-base {
-  background:
-    radial-gradient(ellipse 900px 460px at 50% 0%, rgba(70, 110, 210, 0.22), transparent 58%),
-    radial-gradient(ellipse 1200px 620px at 50% 100%, rgba(50, 80, 170, 0.12), transparent 62%),
-    linear-gradient(180deg, #070b16 0%, #0c1328 48%, #06090f 100%);
-}
-
-/* ② Rastrigin — çok-odalı titreşim */
-.splash-bg-layer--1 .splash-bg-base {
-  background:
-    radial-gradient(ellipse 780px 420px at 18% 12%, rgba(0, 200, 190, 0.14), transparent 55%),
-    radial-gradient(ellipse 700px 500px at 88% 78%, rgba(40, 120, 140, 0.18), transparent 55%),
-    repeating-linear-gradient(105deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 48px),
-    linear-gradient(165deg, #061418 0%, #0a1c22 42%, #050d12 100%);
-}
-
-/* ③ Schwefel — mor derin dalga */
-.splash-bg-layer--2 .splash-bg-base {
-  background:
-    radial-gradient(ellipse 640px 520px at 72% 8%, rgba(140, 90, 255, 0.20), transparent 50%),
-    radial-gradient(ellipse 900px 480px at 12% 92%, rgba(60, 40, 120, 0.35), transparent 55%),
-    linear-gradient(200deg, #0a0618 0%, #120a28 50%, #060812 100%);
-}
-
-/* ④ Ackley — buz ızgara */
-.splash-bg-layer--3 .splash-bg-base {
-  background:
-    radial-gradient(ellipse 520px 380px at 50% 45%, rgba(100, 180, 255, 0.12), transparent 65%),
-    repeating-linear-gradient(0deg, rgba(120, 170, 255, 0.04) 0 1px, transparent 1px 56px),
-    repeating-linear-gradient(90deg, rgba(120, 170, 255, 0.035) 0 1px, transparent 1px 56px),
-    linear-gradient(185deg, #050a14 0%, #0a1528 55%, #040810 100%);
-}
-
-/* ⑤ Himmelblau — dört kuyu sıcak ton */
-.splash-bg-layer--4 .splash-bg-base {
-  background:
-    radial-gradient(ellipse 500px 280px at 50% 0%, rgba(255, 190, 120, 0.10), transparent 58%),
-    radial-gradient(ellipse 1000px 700px at 30% 100%, rgba(45, 75, 140, 0.22), transparent 55%),
-    linear-gradient(178deg, #0b0e18 0%, #141a2e 45%, #070910 100%);
-}
-
-/* ⑥ Griewank — çapraz harmonik */
-.splash-bg-layer--5 .splash-bg-base {
-  background:
-    radial-gradient(ellipse 700px 380px at 80% 18%, rgba(80, 140, 255, 0.16), transparent 52%),
-    radial-gradient(ellipse 600px 440px at 10% 70%, rgba(30, 90, 160, 0.20), transparent 50%),
-    conic-gradient(from 200deg at 50% 120%, rgba(20, 40, 90, 0.35), transparent 40%, rgba(15, 35, 80, 0.25)),
-    linear-gradient(180deg, #060912 0%, #0e1830 50%, #050812 100%);
-}
-
-/* ⑦ Levy — keskin vadiler */
-.splash-bg-layer--6 .splash-bg-base {
-  background:
-    radial-gradient(ellipse 900px 720px at 50% 38%, rgba(70, 150, 255, 0.08), transparent 62%),
-    repeating-conic-gradient(from 0deg at 50% 55%, rgba(120, 170, 255, 0.06) 0deg 4deg, transparent 4deg 14deg),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 72px),
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 72px),
-    linear-gradient(185deg, #040810 0%, #0c1828 48%, #03060c 100%);
-}
-
-/* ⑧ Zakharov — diyagonal ışık */
-.splash-bg-layer--7 .splash-bg-base {
-  background:
-    radial-gradient(ellipse 380px 900px at 8% 50%, rgba(255, 200, 140, 0.12), transparent 58%),
-    radial-gradient(ellipse 520px 640px at 92% 40%, rgba(60, 110, 220, 0.22), transparent 52%),
-    linear-gradient(98deg, #070510 0%, #12102a 38%, #050814 100%);
-}
-
-/* Formula decorations */
-.splash-formulas {
+/* Okunabilirlik için overlay: üst–alt gradient + hafif vinyet */
+.splash-scrim {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  font-family: "Cambria Math", "Latin Modern Math", "Times New Roman", Georgia, serif;
+  background:
+    radial-gradient(120% 90% at 50% 55%, rgba(0,0,0,0.28) 28%, rgba(0,0,0,0.68) 86%, rgba(0,0,0,0.9) 100%),
+    linear-gradient(180deg, rgba(3,6,14,0.8) 0%, rgba(3,6,14,0.45) 32%, rgba(3,6,14,0.42) 62%, rgba(3,6,14,0.86) 100%);
 }
-.f-tex {
+
+/* Üstte küçük etiket (hangi foto / fonksiyon) */
+.splash-caption {
   position: absolute;
-  color: rgba(200, 215, 245, 0.22);
-  font-size: clamp(10px, 1.3vw, 14px);
-  font-style: italic;
+  z-index: 3;
+  top: clamp(14px, 3vh, 28px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(235, 242, 255, 0.92);
+  background: rgba(8, 12, 24, 0.55);
+  border: 1px solid rgba(150, 185, 255, 0.28);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  max-width: min(92vw, 640px);
   white-space: nowrap;
-  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.f-caption {
-  position: absolute;
-  color: rgba(200, 215, 245, 0.32);
-  font-size: clamp(10px, 1.1vw, 12px);
-  letter-spacing: 0.02em;
+.splash-caption-dot {
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #5ed4ff, #7aa3ff);
+  box-shadow: 0 0 10px rgba(120, 200, 255, 0.8);
+  animation: splashDotPulse 1.6s ease-in-out infinite;
 }
-.f-tex--tl    { top: 8%;  left: 5%; }
-.f-tex--tr    { top: 7%;  right: 4%; text-align: right; }
-.f-caption--l { top: 22%; left: 6%; }
-.f-tex--ml    { top: 28%; left: 5%; }
-.f-tex--ml2   { top: 41%; left: 10%; }
-.f-tex--mr    { top: 28%; right: 4%; }
-.f-tex--mr2   { top: 36%; right: 6%; }
-
-/* Merkez görsel — tek sabit perspektif (arka plan ayrı döner) */
-.splash-art-frame {
-  position: absolute;
-  z-index: 1;
-  left: 50%;
-  top: 54%;
-  width: min(720px, 80vw);
-  transform: translate(-50%, -50%) perspective(900px) rotateX(8deg) rotateY(-5deg);
-  transform-style: preserve-3d;
-  pointer-events: none;
-  filter: drop-shadow(0 28px 56px rgba(40, 80, 180, 0.32));
+@keyframes splashDotPulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50%     { transform: scale(1.4); opacity: 0.55; }
 }
 
-/* cone svg */
-.splash-cone {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: auto;
-  transform-origin: 50% 55%;
-  animation: coneFloat 6s ease-in-out infinite;
-}
-@keyframes coneFloat {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-7px); }
-}
-.cone-rings ellipse { animation: ringGlow 3.5s ease-in-out infinite; }
-.cone-rings ellipse:nth-child(2n) { animation-delay: .4s; }
-.cone-rings ellipse:nth-child(3n) { animation-delay: .8s; }
-@keyframes ringGlow {
-  0%, 100% { opacity: 0.9; }
-  50%      { opacity: 0.55; }
-}
-
-/* splash merkez: izohips/3D arazi efekti */
-.terrain-grid path {
-  fill: none;
-  stroke: rgba(118, 168, 255, 0.34);
-  stroke-width: 1.05;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 8px rgba(80, 140, 250, 0.22));
-  animation: terrainFlow 8s linear infinite;
-}
-.terrain-grid path:nth-child(2n) {
-  stroke: rgba(96, 220, 212, 0.23);
-  animation-duration: 9.6s;
-}
-.terrain-grid path:nth-child(3n) { animation-duration: 11.2s; }
-
-.terrain-contours ellipse {
-  fill: none;
-  stroke: rgba(145, 188, 255, 0.40);
-  stroke-width: 1.2;
-  stroke-dasharray: 6 7;
-  stroke-linecap: round;
-  opacity: 0.82;
-  animation: contourSpin 7.4s ease-in-out infinite;
-}
-.terrain-contours ellipse:nth-child(2n) {
-  stroke: rgba(118, 232, 218, 0.30);
-  animation-duration: 9.2s;
-}
-.terrain-contours ellipse:last-child {
-  stroke: rgba(255, 222, 165, 0.55);
-}
-
-@keyframes terrainFlow {
-  0%   { stroke-dasharray: 1 0; opacity: 0.22; }
-  50%  { stroke-dasharray: 10 2; opacity: 0.62; }
-  100% { stroke-dasharray: 1 0; opacity: 0.22; }
-}
-@keyframes contourSpin {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.58; }
-  50%      { transform: translate(2px, -1px) scale(1.015); opacity: 0.95; }
-}
-
-/* hero */
+/* Hero */
 .splash-hero {
   position: absolute;
   z-index: 2;
   left: 0; right: 0;
-  top: clamp(50px, 11vh, 120px);
+  top: clamp(80px, 14vh, 160px);
   text-align: center;
   pointer-events: none;
+  padding: 0 24px;
+  max-width: min(760px, 94vw);
+  margin: 0 auto;
+  background: rgba(4, 10, 22, 0.38);
+  border: 1px solid rgba(160, 190, 255, 0.18);
+  border-radius: 20px;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+.splash-kicker {
+  font-size: clamp(11px, 1.4vw, 13px);
+  font-weight: 700;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: rgba(180, 210, 255, 0.82);
+  text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+  margin-bottom: 14px;
 }
 .splash-title-xl {
   margin: 0;
-  font-size: clamp(52px, 10vw, 110px);
+  font-size: clamp(58px, 11vw, 128px);
   font-weight: 900;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   line-height: 1;
-  background: linear-gradient(180deg, #ffffff 0%, #d9e3f2 45%, #8a97ad 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #d9e3f2 48%, #8ea0c0 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 38px rgba(130, 170, 255, 0.25);
-  filter: drop-shadow(0 4px 0 rgba(0,0,0,0.45));
+  text-shadow: 0 0 46px rgba(130, 170, 255, 0.25);
+  filter: drop-shadow(0 6px 0 rgba(0,0,0,0.55));
 }
 .splash-title-sub {
-  margin: 16px 0 0;
-  font-size: clamp(14px, 1.9vw, 18px);
+  margin: 14px 0 0;
+  font-size: clamp(13px, 1.8vw, 18px);
   font-weight: 500;
-  letter-spacing: 0.06em;
-  color: rgba(210, 220, 245, 0.82);
+  letter-spacing: 0.14em;
+  color: rgba(220, 230, 250, 0.9);
+  text-transform: uppercase;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.65);
 }
-
-/* bottom load */
+/* Alt: yükleme + buton */
 .splash-bottom {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   left: 50%;
-  bottom: clamp(40px, 9vh, 76px);
+  bottom: clamp(44px, 9vh, 84px);
   transform: translateX(-50%);
-  width: min(520px, 90vw);
+  width: min(540px, 92vw);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 22px;
 }
 .splash-load-wrap {
   width: 100%;
@@ -845,16 +815,15 @@ html, body {
   opacity: 0; transform: translateY(8px);
   pointer-events: none; height: 0; margin: 0; overflow: hidden;
 }
-
 .splash-load-track {
   position: relative;
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(130, 170, 255, 0.22);
+  height: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(130, 170, 255, 0.34);
   box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(0, 0, 0, 0.35);
+    inset 0 1px 3px rgba(0, 0, 0, 0.6),
+    0 3px 12px rgba(0, 0, 0, 0.28);
   overflow: hidden;
 }
 .splash-load-fill {
@@ -865,64 +834,92 @@ html, body {
   transform: scaleX(0);
   border-radius: inherit;
   background: linear-gradient(90deg, #2a6cff 0%, #6aa8ff 50%, #9ccaff 100%);
-  box-shadow: 0 0 16px rgba(100, 180, 255, 0.6);
+  box-shadow: 0 0 18px rgba(100, 180, 255, 0.65);
 }
 .splash-load-shine {
   position: absolute; inset: 0;
-  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.22) 50%, transparent 60%);
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.28) 50%, transparent 60%);
   transform: translateX(-100%);
   animation: splashShine 2.2s ease-in-out infinite;
   pointer-events: none;
 }
 @keyframes splashShine { 0% { transform: translateX(-100%);} 100% { transform: translateX(200%); } }
-
 .splash-load-msg {
   margin: 10px 0 0;
   text-align: center;
   font-size: 12px;
-  letter-spacing: 0.22em;
-  color: rgba(200, 215, 245, 0.6);
+  letter-spacing: 0.24em;
+  color: rgba(210, 225, 250, 0.72);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
 }
 
 .splash-start {
   border: 0;
   cursor: pointer;
-  min-width: 220px;
-  padding: 14px 36px;
+  min-width: 240px;
+  padding: 13px 28px;
   font-size: 14px;
   font-weight: 800;
-  letter-spacing: 0.42em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: #0a0e18;
-  border-radius: 999px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   background: linear-gradient(135deg, #7eb8ff 0%, #5078ff 45%, #a068e8 100%);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.14) inset,
-    0 10px 34px rgba(60, 100, 220, 0.55),
-    0 0 28px rgba(130, 170, 255, 0.55);
+    0 0 0 1px rgba(255, 255, 255, 0.18) inset,
+    0 12px 36px rgba(60, 100, 220, 0.6),
+    0 0 30px rgba(130, 170, 255, 0.6);
   opacity: 0;
   transform: translateY(12px);
   transition: opacity 0.45s ease, transform 0.45s ease, filter 0.2s ease;
 }
+.splash-start-note {
+  margin: -6px 0 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(210, 224, 248, 0.82);
+  max-width: min(520px, 92vw);
+}
+.splash-start-ico {
+  width: 18px;
+  height: 18px;
+  color: #0a0e18;
+  margin-left: -4px;
+  transition: transform 0.25s ease;
+}
+.splash-start:hover .splash-start-ico { transform: translateX(3px); }
 .splash-start:not([hidden]).ready {
   opacity: 1; transform: translateY(0);
   animation: readyPulseSplash 2.6s ease-in-out infinite;
 }
-.splash-start:hover { filter: brightness(1.08); }
+.splash-start:hover { filter: brightness(1.1); }
 .splash-start:active { transform: translateY(1px) scale(0.99); }
 @keyframes readyPulseSplash {
-  0%,100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.14) inset, 0 10px 34px rgba(60,100,220,0.55), 0 0 22px rgba(130,170,255,0.45); }
-  50%     { box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 14px 42px rgba(60,100,220,0.65), 0 0 38px rgba(170,200,255,0.85); }
+  0%,100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 12px 36px rgba(60,100,220,0.6), 0 0 22px rgba(130,170,255,0.45); }
+  50%     { box-shadow: 0 0 0 1px rgba(255,255,255,0.22) inset, 0 16px 46px rgba(60,100,220,0.7), 0 0 40px rgba(170,200,255,0.9); }
 }
 
 .splash-sparkle {
   position: absolute;
-  z-index: 2;
-  right: clamp(18px, 3vw, 42px);
-  bottom: clamp(22px, 4vh, 42px);
+  z-index: 3;
+  right: clamp(20px, 3vw, 46px);
+  bottom: clamp(24px, 4vh, 46px);
   width: 22px; height: 22px;
   opacity: 0.75;
-  filter: drop-shadow(0 0 8px rgba(170, 210, 255, 0.6));
+  filter: drop-shadow(0 0 8px rgba(170, 210, 255, 0.7));
+}
+
+/* Küçük ekran düzeltmeleri */
+@media (max-width: 640px) {
+  .splash-caption { font-size: 11px; letter-spacing: 0.16em; padding: 6px 12px; }
+  .splash-hero { top: clamp(70px, 10vh, 110px); }
+  .splash-start { min-width: 190px; padding: 12px 20px; letter-spacing: 0.16em; }
+  .splash-start-note { font-size: 11px; line-height: 1.35; }
 }
 
 /* Splash sonrası açılan intro pop-up */
@@ -1734,6 +1731,25 @@ html, body {
 }
 @media (max-width: 1080px) {
   .how-airfield-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .how-airfield-params { grid-template-columns: 1fr; }
+  .how-airfield-stats { grid-template-columns: 1fr; }
+  .how-airfield-progress { grid-template-columns: 1fr; gap: 6px; }
+  .how-airfield-progress-label { font-size: 11px; }
+  .how-airfield-side { padding: 12px; gap: 12px; }
+  .how-airfield-canvas { aspect-ratio: 4 / 3; }
+  .how-airfield-controls .btn-neon { min-height: 40px; font-size: 12.5px; }
+  .how-airfield-subtitle { font-size: 12px; margin-bottom: 8px; }
+  .how-airfield-subnote { font-size: 11.5px; line-height: 1.5; }
+  .how-airfield-status { font-size: 12px; line-height: 1.5; }
+  .how-airfield-spark canvas { height: 120px; }
+}
+@media (max-width: 520px) {
+  .how-airfield-canvas { aspect-ratio: 1 / 1; }
+  .how-airfield-nn svg { min-height: 220px; }
+  .how-airfield-stats .stat .k { font-size: 11px; }
+  .how-airfield-stats .stat .v { font-size: 15px; }
 }
 
 .how-airfield-stage {

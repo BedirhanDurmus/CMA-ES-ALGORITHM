@@ -2,25 +2,13 @@
 
 const $ = (id) => document.getElementById(id);
 
-function renderSplashFormulas() {
-  if (typeof katex === "undefined") return;
-  document.querySelectorAll(".f-tex").forEach((el) => {
-    const tex = el.getAttribute("data-tex");
-    if (!tex || el.dataset.rendered === "1") return;
-    try {
-      katex.render(tex, el, { throwOnError: false, displayMode: false });
-      el.dataset.rendered = "1";
-    } catch { /* no-op */ }
-  });
-}
-
-function waitForKaTeX(cb, tries = 30) {
-  if (typeof katex !== "undefined") return cb();
-  if (tries <= 0) return;
-  setTimeout(() => waitForKaTeX(cb, tries - 1), 120);
-}
-waitForKaTeX(renderSplashFormulas);
-
+/**
+ * Splash (foto carousel)
+ * - splashMedia <script type="application/json"> içeriğini okur
+ * - Tüm görselleri preload eder, yükleme barı preload ilerlemesini gösterir
+ * - İki katman arasında crossfade + Ken-Burns zoom ile döndürür
+ * - Başla butonu, görseller hazır olunca etkinleşir
+ */
 (function initSplash() {
   const splash = document.getElementById("splash");
   const btn = document.getElementById("splashStartBtn");
@@ -28,36 +16,167 @@ waitForKaTeX(renderSplashFormulas);
   const track = document.getElementById("splashLoadTrack");
   const loadWrap = document.getElementById("splashLoadWrap");
   const loadMsg = document.getElementById("splashLoadMsg");
+  const captionEl = document.getElementById("splashCaption");
+  const captionText = captionEl ? captionEl.querySelector(".splash-caption-text") : null;
   const introPopup = document.getElementById("introPopup");
   const introCloseBtn = document.getElementById("introPopupClose");
   if (!splash || !btn || !fill || !track || !loadWrap) return;
 
-  const DURATION_MS = 2800;
-  let dismissed = false;
-  let ready = false;
-
-  /** Arka plan: farklı benchmark peyzajları (SVG + gradient) arasında geçiş */
-  const bgLayers = splash.querySelectorAll(".splash-bg-layer");
-  let bgIdx = 0;
-  let bgTimer = null;
-
-  if (bgLayers.length > 1) {
-    const ROTATE_MS = 1200;
-    bgTimer = setInterval(() => {
-      if (dismissed) return;
-      bgLayers[bgIdx].classList.remove("is-active");
-      bgIdx = (bgIdx + 1) % bgLayers.length;
-      bgLayers[bgIdx].classList.add("is-active");
-    }, ROTATE_MS);
+  // ---- Medya listesini topla (foto + benchmark'lar karışık) ----
+  let mediaJson = { photos: [], benches: [], finalSlide: null };
+  const dataNode = document.getElementById("splashMedia");
+  if (dataNode && dataNode.textContent) {
+    try { mediaJson = JSON.parse(dataNode.textContent); }
+    catch (e) { console.warn("splashMedia JSON parse hatası:", e); }
   }
 
-  const hide = () => {
+  /** @type {{src:string,label:string,kind:string,fit?:string}[]} */
+  const items = [];
+  const photos  = Array.isArray(mediaJson.photos)  ? mediaJson.photos  : [];
+  const benches = Array.isArray(mediaJson.benches) ? mediaJson.benches : [];
+  const isMobileViewport = window.matchMedia("(max-width: 700px)").matches;
+
+  photos.forEach((p) => items.push({
+    src: p.src,
+    label: p.label || "",
+    kind: "photo",
+    fit: p.fit || "contain",
+  }));
+  benches.forEach((b) => {
+    const benchSrc = isMobileViewport && b.surfaceMobile ? b.surfaceMobile : b.surface;
+    if (benchSrc) items.push({
+      src: benchSrc,
+      label: b.name ? `${b.name}` : "Benchmark yüzeyi",
+      kind: "bench",
+      fit: "contain",
+    });
+  });
+  // Sıra: fotoğraflar -> benchmark kolajı
+  const ORDER = items;
+
+  const slides = splash.querySelectorAll(".splash-slide");
+  if (!slides.length || !ORDER.length) {
+    // Medya yoksa klasik yükleniyor davranışı
+    fallbackLoader();
+    return;
+  }
+  const kbClasses = ["kb-a", "kb-b", "kb-c", "kb-d"];
+  let curSlot = 0;   // aktif slot index (0=a,1=b)
+  let curIdx  = -1;  // ORDER içindeki aktif görsel index
+  let dismissed = false;
+  let ready = false;
+  let rotationTimer = null;
+  let loadMsgTimer = null;
+  let loadMsgIdx = 0;
+  const ROTATE_MS = {
+    photo: 3600,
+    bench: 5200,
+    final: 6400,
+    fallback: 4200,
+  };
+
+  // --- preload ---
+  function preloadAll(onProgress) {
+    return new Promise((resolve) => {
+      let done = 0;
+      const total = ORDER.length;
+      const results = new Array(total);
+      ORDER.forEach((item, i) => {
+        const img = new Image();
+        img.onload = img.onerror = () => {
+          done += 1;
+          results[i] = true;
+          onProgress && onProgress(done / total);
+          if (done === total) resolve(results);
+        };
+        img.decoding = "async";
+        img.loading = "eager";
+        img.src = item.src;
+      });
+    });
+  }
+
+  function updateCaption(item) {
+    if (!captionText) return;
+    captionText.textContent = item.label || "CMA-ES";
+  }
+
+  function swapTo(idx) {
+    const nextSlot = 1 - curSlot;
+    const target = slides[nextSlot];
+    const item = ORDER[idx];
+    if (!target || !item) return;
+
+    // Görseli ata, Ken-Burns yönünü değiştir
+    target.style.backgroundImage = `url("${item.src}")`;
+    target.style.backgroundSize = item.fit === "contain" ? "contain" : "cover";
+    target.classList.remove("kb-a", "kb-b", "kb-c", "kb-d");
+    target.classList.add(kbClasses[idx % kbClasses.length]);
+
+    // Önce aktifleştir (crossfade), sonra eski slotu kapat
+    target.classList.add("is-active");
+    const prev = slides[curSlot];
+    // Küçük bir gecikmeyle eski kareyi bırak ki fade-out hissedilsin
+    setTimeout(() => {
+      if (prev && prev !== target) {
+        prev.classList.remove("is-active");
+      }
+    }, 80);
+
+    curSlot = nextSlot;
+    curIdx  = idx;
+    updateCaption(item);
+  }
+
+  function startRotation() {
+    if (rotationTimer) return;
+    const tick = () => {
+      if (dismissed) return;
+      const next = (curIdx + 1) % ORDER.length;
+      swapTo(next);
+      const kind = ORDER[next]?.kind || "fallback";
+      const waitMs = ROTATE_MS[kind] || ROTATE_MS.fallback;
+      rotationTimer = setTimeout(tick, waitMs);
+    };
+    const firstKind = ORDER[curIdx]?.kind || "fallback";
+    const firstWait = ROTATE_MS[firstKind] || ROTATE_MS.fallback;
+    rotationTimer = setTimeout(tick, firstWait);
+  }
+
+  function stopRotation() {
+    if (rotationTimer) { clearTimeout(rotationTimer); rotationTimer = null; }
+  }
+
+  // ---- progress / finish ----
+  function setProgress(p) {
+    const c = Math.max(0, Math.min(1, p));
+    fill.style.transform = `scaleX(${c})`;
+    track.setAttribute("aria-valuenow", String(Math.round(c * 100)));
+  }
+
+  function finishLoad() {
+    if (ready) return;
+    ready = true;
+    if (loadMsgTimer) {
+      clearInterval(loadMsgTimer);
+      loadMsgTimer = null;
+    }
+    setProgress(1);
+    loadWrap.classList.add("is-done");
+    if (loadMsg) loadMsg.textContent = "";
+    btn.hidden = false;
+    btn.disabled = false;
+    requestAnimationFrame(() => {
+      btn.classList.add("ready");
+      btn.focus({ preventScroll: true });
+    });
+  }
+
+  // ---- hide & intro popup ----
+  function hide() {
     if (dismissed || !ready) return;
     dismissed = true;
-    if (bgTimer) {
-      clearInterval(bgTimer);
-      bgTimer = null;
-    }
+    stopRotation();
     splash.classList.add("hide");
     setTimeout(() => {
       splash.remove();
@@ -66,13 +185,13 @@ waitForKaTeX(renderSplashFormulas);
         introPopup.setAttribute("aria-hidden", "false");
       }
     }, 700);
-  };
+  }
 
-  const closeIntroPopup = () => {
+  function closeIntroPopup() {
     if (!introPopup || introPopup.hidden) return;
     introPopup.hidden = true;
     introPopup.setAttribute("aria-hidden", "true");
-  };
+  }
 
   if (introPopup) {
     introPopup.addEventListener("click", (e) => {
@@ -81,51 +200,93 @@ waitForKaTeX(renderSplashFormulas);
       }
     });
   }
-  if (introCloseBtn) {
-    introCloseBtn.addEventListener("click", closeIntroPopup);
-  }
+  if (introCloseBtn) introCloseBtn.addEventListener("click", closeIntroPopup);
 
-  const finishLoad = () => {
-    if (ready) return;
-    ready = true;
-    fill.style.transform = "scaleX(1)";
-    track.setAttribute("aria-valuenow", "100");
-    loadWrap.classList.add("is-done");
-    if (loadMsg) loadMsg.textContent = "";
-    btn.hidden = false;
-    btn.disabled = false;
-    requestAnimationFrame(() => {
-      btn.classList.add("ready");
-      btn.focus();
-    });
-  };
-
-  const t0 = performance.now();
-  const step = (now) => {
-    const p = Math.min(1, (now - t0) / DURATION_MS);
-    fill.style.transform = `scaleX(${p})`;
-    track.setAttribute("aria-valuenow", String(Math.round(p * 100)));
-    if (p < 1) {
-      requestAnimationFrame(step);
-    } else {
-      finishLoad();
-    }
-  };
-  requestAnimationFrame(step);
-
+  // ---- olaylar ----
   btn.addEventListener("click", hide);
   document.addEventListener("keydown", (e) => {
     if (!ready) return;
     if (e.key === "Escape" && introPopup && !introPopup.hidden) {
-      e.preventDefault();
-      closeIntroPopup();
-      return;
+      e.preventDefault(); closeIntroPopup(); return;
     }
     if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
-      e.preventDefault();
-      hide();
+      e.preventDefault(); hide();
     }
   });
+
+  // ---- akış ----
+  // 1) ilk kareyi anında göster (gecikmesiz), kısa bir preload fazı başlat
+  swapTo(0);
+  startRotation();
+
+  // Yükleme sırasında daha canlı durum mesajları döndür
+  const loadMessages = [
+    "Parametreler hazırlanıyor…",
+    "Algoritma ayarları optimize ediliyor…",
+    "Benchmark fonksiyonları yükleniyor…",
+    "Görsel katmanlar işleniyor…",
+    "Simülasyon sahnesi hazırlanıyor…",
+    "CMA-ES bileşenleri senkronize ediliyor…",
+    "Sunum akışı son kontrollerden geçiyor…",
+  ];
+  if (loadMsg) {
+    loadMsg.textContent = loadMessages[0];
+    loadMsgTimer = setInterval(() => {
+      if (ready || dismissed) return;
+      loadMsgIdx = (loadMsgIdx + 1) % loadMessages.length;
+      loadMsg.textContent = loadMessages[loadMsgIdx];
+    }, 1050);
+  }
+
+  // 2) yükleme barı: sıfırdan yumuşak yükselsin ve daha uzun kalsın
+  const MIN_MS = 6200;
+  const t0 = performance.now();
+  let preloadP = 0;
+  let preloadDone = false;
+  let visualP = 0;
+
+  preloadAll((p) => {
+    preloadP = Math.max(preloadP, p);
+  }).then(() => {
+    preloadDone = true;
+  });
+
+  (function progressTick() {
+    const byTime = Math.min(1, (performance.now() - t0) / MIN_MS);
+    // Hem preload hem zaman eğrisi birlikte kontrol eder; ani sıçrama engellenir
+    const cap = Math.min(preloadP * 0.9, byTime * 0.9);
+    // Yumuşak yaklaşım (lerp)
+    visualP += (cap - visualP) * 0.09;
+    setProgress(visualP);
+
+    const readyForTail = preloadDone && byTime >= 1 && Math.abs(visualP - cap) < 0.004;
+    if (!readyForTail) {
+      requestAnimationFrame(progressTick);
+      return;
+    }
+
+    const t1 = performance.now();
+    const TAIL = 900;
+    (function tailTick() {
+      const p = Math.min(1, (performance.now() - t1) / TAIL);
+      setProgress(0.9 + 0.1 * p);
+      if (p < 1) requestAnimationFrame(tailTick);
+      else finishLoad();
+    })();
+  })();
+
+  function fallbackLoader() {
+    // Medya bulunamadığında eski zamana dayalı yükleyiciyi çalıştır
+    const DURATION = 2400;
+    const t0b = performance.now();
+    (function step(){
+      const p = Math.min(1, (performance.now() - t0b) / DURATION);
+      setProgress(p);
+      if (p < 1) requestAnimationFrame(step);
+      else finishLoad();
+    })();
+    btn.addEventListener("click", hide);
+  }
 })();
 
 let RUN = null;
@@ -308,6 +469,11 @@ updateSpeedReadout();
 
 function initPlots() {
   const { surface, bounds, label } = RUN;
+  const isPhone = window.matchMedia("(max-width: 760px)").matches;
+  const sxMin = Math.min(...surface.x);
+  const sxMax = Math.max(...surface.x);
+  const syMin = Math.min(...surface.y);
+  const syMax = Math.max(...surface.y);
   const opt = RUN.meta.optimum;
   const ox = opt[0];
   const oy = opt[1];
@@ -323,7 +489,7 @@ function initPlots() {
         z: surface.z,
         colorscale: "Magma",
         contours: { coloring: "heatmap" },
-        showscale: true,
+        showscale: !isPhone,
         colorbar: {
           len: 0.7,
           thickness: 12,
@@ -398,34 +564,34 @@ function initPlots() {
     {
       title: {
         text: `${label} — Kontur (Magma)`,
-        font: { color: "#dce4ff", size: 14 },
+        font: { color: "#dce4ff", size: isPhone ? 16 : 14 },
       },
       paper_bgcolor: PLOT_BG,
       plot_bgcolor: PLOT_BG,
       font: { color: "#e6e7ea" },
       xaxis: {
-        range: bounds.x,
+        range: [sxMin, sxMax],
         title: "x₁",
         gridcolor: "rgba(255,255,255,0.06)",
         zerolinecolor: "rgba(255,255,255,0.12)",
       },
       yaxis: {
-        range: bounds.y,
+        range: [syMin, syMax],
         title: "x₂",
         scaleanchor: "x",
         scaleratio: 1,
         gridcolor: "rgba(255,255,255,0.06)",
         zerolinecolor: "rgba(255,255,255,0.12)",
       },
-      margin: { l: 52, r: 24, t: 48, b: 44 },
+      margin: isPhone ? { l: 46, r: 10, t: 56, b: 42 } : { l: 52, r: 24, t: 48, b: 44 },
       legend: {
         orientation: "h",
-        y: -0.22,
-        font: { size: 10 },
+        y: isPhone ? -0.17 : -0.22,
+        font: { size: isPhone ? 11 : 10 },
         bgcolor: "rgba(0,0,0,0)",
       },
     },
-    { responsive: true, displaylogo: false }
+    { responsive: true, displaylogo: false, displayModeBar: !isPhone }
   );
 
   Plotly.newPlot(
@@ -437,7 +603,7 @@ function initPlots() {
         y: surface.y,
         z: surface.z,
         colorscale: "Twilight",
-        showscale: true,
+        showscale: !isPhone,
         colorbar: {
           len: 0.55,
           thickness: 10,
@@ -505,19 +671,23 @@ function initPlots() {
     {
       title: {
         text: `${label} — Yüzey (Twilight)`,
-        font: { color: "#dce4ff", size: 14 },
+        font: { color: "#dce4ff", size: isPhone ? 16 : 14 },
       },
       paper_bgcolor: PLOT_BG,
       font: { color: "#e6e7ea" },
       scene: {
         bgcolor: PLOT_BG,
+        aspectmode: isPhone ? "manual" : "cube",
+        aspectratio: isPhone ? { x: 1.05, y: 1.05, z: 0.62 } : undefined,
         xaxis: {
           title: "x₁",
+          range: [sxMin, sxMax],
           backgroundcolor: PLOT_BG,
           gridcolor: "rgba(255,255,255,0.08)",
         },
         yaxis: {
           title: "x₂",
+          range: [syMin, syMax],
           backgroundcolor: PLOT_BG,
           gridcolor: "rgba(255,255,255,0.08)",
         },
@@ -527,14 +697,27 @@ function initPlots() {
           gridcolor: "rgba(255,255,255,0.08)",
         },
       },
-      margin: { l: 0, r: 0, t: 48, b: 0 },
-      legend: {
+      margin: isPhone ? { l: 0, r: 0, t: 58, b: 0 } : { l: 0, r: 0, t: 48, b: 0 },
+      showlegend: !isPhone,
+      legend: isPhone ? undefined : {
         font: { size: 10 },
         bgcolor: "rgba(0,0,0,0)",
       },
     },
-    { responsive: true, displaylogo: false }
+    { responsive: true, displaylogo: false, displayModeBar: !isPhone }
   );
+
+  if (isPhone) {
+    Plotly.relayout("plot3d", {
+      "scene.camera.eye": { x: 1.45, y: 1.35, z: 0.75 },
+      "scene.camera.center": { x: 0, y: 0, z: -0.08 },
+    });
+    // CSS mobil yüksekliği uygulandıktan sonra tekrar ölçülendir
+    setTimeout(() => {
+      try { Plotly.Plots.resize("plot2d"); } catch (_) {}
+      try { Plotly.Plots.resize("plot3d"); } catch (_) {}
+    }, 140);
+  }
 }
 
 function initConvPlot() {
