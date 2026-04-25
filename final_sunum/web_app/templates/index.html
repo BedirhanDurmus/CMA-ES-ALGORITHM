@@ -1,0 +1,1197 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>CMA-ES | Nöro-Bulanık Optimizasyon Platformu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {# ---------------- Splash ---------------- #}
+  <div id="splash" class="splash" role="dialog" aria-label="CMA-ES açılış ekranı">
+    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="splash-bench-sprite" aria-hidden="true" focusable="false">
+      <symbol id="bench-sphere" viewBox="-200 -130 400 260">
+        <g fill="none" stroke="rgba(130,185,255,0.42)" stroke-width="0.9">
+          <ellipse cx="0" cy="8" rx="168" ry="80"/><ellipse cx="0" cy="8" rx="128" ry="61"/><ellipse cx="0" cy="8" rx="92" ry="44"/>
+          <ellipse cx="0" cy="8" rx="60" ry="29"/><ellipse cx="0" cy="8" rx="34" ry="16"/>
+        </g>
+        <circle cx="0" cy="8" r="5" fill="rgba(255,214,120,0.35)"/>
+      </symbol>
+      <symbol id="bench-rastrigin" viewBox="-200 -130 400 260">
+        <defs><pattern id="splashPatRastr" width="22" height="22" patternUnits="userSpaceOnUse">
+          <circle cx="6" cy="6" r="2.4" fill="none" stroke="rgba(95,175,255,0.32)" stroke-width="0.4"/>
+          <circle cx="17" cy="14" r="1.5" fill="rgba(57,255,184,0.14)"/>
+        </pattern></defs>
+        <rect x="-200" y="-130" width="400" height="260" fill="url(#splashPatRastr)"/>
+        <g fill="none" stroke="rgba(120,190,255,0.14)" stroke-width="0.35">
+          <path d="M-200,-20 C-60,-90 60,90 200,10"/><path d="M-200,40 C-50,-30 50,110 200,50"/><path d="M-200,100 C-40,20 40,-40 200,90"/>
+        </g>
+      </symbol>
+      <symbol id="bench-schwefel" viewBox="-200 -130 400 260">
+        <g fill="none" stroke="rgba(175,150,255,0.32)" stroke-width="0.55">
+          <path d="M-200,-60 L200,120"/><path d="M-200,-30 L200,150"/><path d="M-200,0 L200,180"/><path d="M-200,30 L200,-40"/><path d="M-200,60 L200,-10"/>
+          <path d="M-200,90 L200,20"/><path d="M-200,-90 L200,60"/>
+        </g>
+        <g fill="none" stroke="rgba(100,200,255,0.18)" stroke-width="0.45">
+          <path d="M-200,0 Q0,-55 200,0"/><path d="M-200,40 Q0,-15 200,40"/><path d="M-200,80 Q0,25 200,80"/>
+        </g>
+      </symbol>
+      <symbol id="bench-ackley" viewBox="-200 -130 400 260">
+        <g fill="none" stroke="rgba(110,185,255,0.22)" stroke-width="0.5">
+          <line x1="0" y1="-120" x2="0" y2="120"/><line x1="-200" y1="0" x2="200" y2="0"/>
+          <line x1="-141" y1="-141" x2="141" y2="141"/><line x1="-141" y1="141" x2="141" y2="-141"/>
+        </g>
+        <g fill="none" stroke="rgba(57,255,184,0.28)" stroke-width="0.65">
+          <circle cx="0" cy="0" r="28"/><circle cx="0" cy="0" r="52"/><circle cx="0" cy="0" r="78"/><circle cx="0" cy="0" r="105"/>
+        </g>
+        <circle cx="0" cy="0" r="6" fill="rgba(255,217,100,0.28)"/>
+      </symbol>
+      <symbol id="bench-himmelblau" viewBox="-200 -130 400 260">
+        <g fill="none" stroke="rgba(130,200,255,0.35)" stroke-width="0.7">
+          <ellipse cx="-72" cy="-48" rx="38" ry="22"/><ellipse cx="78" cy="-52" rx="36" ry="21"/>
+          <ellipse cx="-68" cy="58" rx="37" ry="23"/><ellipse cx="82" cy="62" rx="35" ry="21"/>
+        </g>
+        <g fill="rgba(255,200,120,0.08)" stroke="rgba(255,200,120,0.35)" stroke-width="0.5">
+          <circle cx="-72" cy="-48" r="5"/><circle cx="78" cy="-52" r="5"/><circle cx="-68" cy="58" r="5"/><circle cx="82" cy="62" r="5"/>
+        </g>
+      </symbol>
+      <symbol id="bench-griewank" viewBox="-200 -130 400 260">
+        <g fill="none" stroke="rgba(150,170,255,0.22)" stroke-width="0.4">
+          <path d="M-200,0 C-80,-80 80,80 200,0"/><path d="M-200,30 C-70,-50 70,50 200,30"/><path d="M-200,-40 C-90,60 90,-60 200,-40"/>
+        </g>
+        <g stroke="rgba(57,255,184,0.2)" stroke-width="0.35" fill="none">
+          <line x1="0" y1="-130" x2="0" y2="130"/><line x1="-200" y1="0" x2="200" y2="0"/><line x1="-200" y1="-130" x2="200" y2="130"/><line x1="-200" y1="130" x2="200" y2="-130"/>
+        </g>
+      </symbol>
+      <symbol id="bench-levy" viewBox="-200 -130 400 260">
+        <g fill="none" stroke="rgba(240,140,180,0.28)" stroke-width="0.55">
+          <path d="M-200,80 Q-100,-100 0,20 Q100,-100 200,80"/><path d="M-200,40 Q-80,-60 0,0 Q80,-60 200,40"/>
+        </g>
+        <g fill="none" stroke="rgba(120,175,255,0.2)" stroke-width="0.45">
+          <path d="M-200,-30 L200,-30"/><path d="M-200,10 L200,10"/><path d="M-200,50 L200,50"/>
+        </g>
+      </symbol>
+      <symbol id="bench-zakharov" viewBox="-200 -130 400 260">
+        <g fill="none" stroke="rgba(100,160,255,0.26)" stroke-width="0.5">
+          <line x1="-200" y1="-80" x2="200" y2="100"/><line x1="-200" y1="-40" x2="200" y2="120"/><line x1="-200" y1="0" x2="200" y2="140"/>
+          <line x1="-200" y1="40" x2="200" y2="-100"/><line x1="-200" y1="80" x2="200" y2="-60"/>
+        </g>
+        <circle cx="0" cy="0" r="70" fill="none" stroke="rgba(255,217,100,0.15)" stroke-width="0.6" stroke-dasharray="4 6"/>
+      </symbol>
+    </svg>
+
+    <div class="splash-bg-stack" aria-hidden="true">
+      <div class="splash-bg-layer splash-bg-layer--0 is-active" data-fn="SPHERE">
+        <div class="splash-bg-base"></div>
+        <svg class="splash-fn-art" viewBox="-200 -130 400 260" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true"><use href="#bench-sphere" xlink:href="#bench-sphere"/></svg>
+      </div>
+      <div class="splash-bg-layer splash-bg-layer--1" data-fn="RASTRIGIN">
+        <div class="splash-bg-base"></div>
+        <svg class="splash-fn-art" viewBox="-200 -130 400 260" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true"><use href="#bench-rastrigin" xlink:href="#bench-rastrigin"/></svg>
+      </div>
+      <div class="splash-bg-layer splash-bg-layer--2" data-fn="SCHWEFEL">
+        <div class="splash-bg-base"></div>
+        <svg class="splash-fn-art" viewBox="-200 -130 400 260" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true"><use href="#bench-schwefel" xlink:href="#bench-schwefel"/></svg>
+      </div>
+      <div class="splash-bg-layer splash-bg-layer--3" data-fn="ACKLEY">
+        <div class="splash-bg-base"></div>
+        <svg class="splash-fn-art" viewBox="-200 -130 400 260" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true"><use href="#bench-ackley" xlink:href="#bench-ackley"/></svg>
+      </div>
+      <div class="splash-bg-layer splash-bg-layer--4" data-fn="HIMMELBLAU">
+        <div class="splash-bg-base"></div>
+        <svg class="splash-fn-art" viewBox="-200 -130 400 260" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true"><use href="#bench-himmelblau" xlink:href="#bench-himmelblau"/></svg>
+      </div>
+      <div class="splash-bg-layer splash-bg-layer--5" data-fn="GRIEWANK">
+        <div class="splash-bg-base"></div>
+        <svg class="splash-fn-art" viewBox="-200 -130 400 260" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true"><use href="#bench-griewank" xlink:href="#bench-griewank"/></svg>
+      </div>
+      <div class="splash-bg-layer splash-bg-layer--6" data-fn="LEVY">
+        <div class="splash-bg-base"></div>
+        <svg class="splash-fn-art" viewBox="-200 -130 400 260" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true"><use href="#bench-levy" xlink:href="#bench-levy"/></svg>
+      </div>
+      <div class="splash-bg-layer splash-bg-layer--7" data-fn="ZAKHAROV">
+        <div class="splash-bg-base"></div>
+        <svg class="splash-fn-art" viewBox="-200 -130 400 260" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true"><use href="#bench-zakharov" xlink:href="#bench-zakharov"/></svg>
+      </div>
+    </div>
+
+    <div class="splash-formulas" aria-hidden="true">
+      <div class="f-tex f-tex--tl" data-tex="\nabla(z) = \sigma_{k,i} + N_{\text{ing}} \sum_{i=1}^{n} \alpha_j^{-1} z^{k-1}_j"></div>
+      <div class="f-tex f-tex--tr" data-tex="E_{\text{tot}} = \begin{cases} U(x_j) - \alpha_{k,i}, & \beta < 1 \\ M(x_j) - \alpha_{ij}, & \beta < 1 \end{cases}"></div>
+      <div class="f-caption f-caption--l">Standard normal distribution starting point</div>
+      <div class="f-tex f-tex--ml" data-tex="E(x) = \pi_{ei} \times \alpha_b + t \left(\tfrac{1 + \sigma(\pi y)}{2n}\right)"></div>
+      <div class="f-tex f-tex--ml2" data-tex="k_j = N\tfrac{1}{2}\alpha k_j E_j(n-1)"></div>
+      <div class="f-tex f-tex--mr" data-tex="V_m(x) = \alpha_{cr} \sin\!\left(|\cdot \pi_j|\right)\cdot(J_\theta - \alpha_i + \alpha_j)"></div>
+      <div class="f-tex f-tex--mr2" data-tex="\Gamma^*(x) = \alpha_b\,\mathrm{st}\,\pi_k\,h\!\left(\{I_b - \sigma_{it}\cdot x_j\}\right)"></div>
+    </div>
+
+    {# 3D huni / yakınsama (sabit perspektif; arka plan benchmark sahneleri ayrı döner) #}
+    <div class="splash-art-frame">
+    <svg class="splash-cone" viewBox="-260 -180 520 360" aria-hidden="true">
+      <defs>
+        <radialGradient id="cone-core" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="40%" stop-color="#b9e0ff"/>
+          <stop offset="100%" stop-color="rgba(60,120,220,0)"/>
+        </radialGradient>
+        <linearGradient id="ringBlue" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"  stop-color="#3d7bff" stop-opacity="0.25"/>
+          <stop offset="55%" stop-color="#7ec4ff" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#3d7bff" stop-opacity="0.25"/>
+        </linearGradient>
+        <linearGradient id="ringAmber" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"  stop-color="#ffb560" stop-opacity="0.15"/>
+          <stop offset="55%" stop-color="#ffd29a" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#ffb560" stop-opacity="0.15"/>
+        </linearGradient>
+        <filter id="glowBlue"  x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glowAmber" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      {# merkezde 3D topo arazi katmanı #}
+      <g class="terrain-grid" aria-hidden="true">
+        <path d="M-210 110 Q-90 70 20 102 T230 96" />
+        <path d="M-220 90 Q-95 52 20 84 T230 78" />
+        <path d="M-228 72 Q-100 36 20 66 T228 60" />
+        <path d="M-230 54 Q-105 22 20 48 T224 42" />
+        <path d="M-224 38 Q-102 10 18 32 T214 26" />
+        <path d="M-210 24 Q-92 0 16 18 T196 14" />
+      </g>
+      <g class="terrain-contours" aria-hidden="true">
+        <ellipse cx="18" cy="54" rx="182" ry="52"/>
+        <ellipse cx="22" cy="56" rx="148" ry="44"/>
+        <ellipse cx="28" cy="58" rx="116" ry="36"/>
+        <ellipse cx="34" cy="61" rx="88" ry="28"/>
+        <ellipse cx="40" cy="63" rx="64" ry="21"/>
+        <ellipse cx="46" cy="65" rx="42" ry="14"/>
+      </g>
+
+      {# zemin topografyası #}
+      <g class="cone-floor" opacity="0.22" stroke="#6a8bff" fill="none" stroke-width="0.6">
+        <ellipse cx="40"  cy="80" rx="230" ry="40"/>
+        <ellipse cx="30"  cy="80" rx="190" ry="33"/>
+        <ellipse cx="20"  cy="80" rx="150" ry="26"/>
+        <ellipse cx="10"  cy="80" rx="115" ry="20"/>
+        <ellipse cx="0"   cy="80" rx="85"  ry="15"/>
+        <ellipse cx="-6"  cy="80" rx="58"  ry="10"/>
+        <ellipse cx="-10" cy="80" rx="34"  ry="6"/>
+      </g>
+
+      {# huni halkaları (dıştan içe küçülen, azıcık kaydırılarak sağa-aşağı inen koni) #}
+      <g class="cone-rings" filter="url(#glowBlue)">
+        <ellipse cx="-24" cy="-70" rx="170" ry="36"  stroke="url(#ringBlue)"  stroke-width="2.2" fill="none"/>
+        <ellipse cx="-14" cy="-48" rx="140" ry="30"  stroke="url(#ringBlue)"  stroke-width="2"   fill="none"/>
+        <ellipse cx="-4"  cy="-26" rx="114" ry="25"  stroke="url(#ringBlue)"  stroke-width="1.8" fill="none"/>
+        <ellipse cx="6"   cy="-6"  rx="90"  ry="20"  stroke="url(#ringBlue)"  stroke-width="1.6" fill="none"/>
+        <ellipse cx="16"  cy="12"  rx="68"  ry="16"  stroke="url(#ringAmber)" stroke-width="1.6" fill="none" filter="url(#glowAmber)"/>
+        <ellipse cx="26"  cy="28"  rx="48"  ry="12"  stroke="url(#ringAmber)" stroke-width="1.5" fill="none" filter="url(#glowAmber)"/>
+        <ellipse cx="36"  cy="42"  rx="32"  ry="9"   stroke="url(#ringAmber)" stroke-width="1.3" fill="none" filter="url(#glowAmber)"/>
+        <ellipse cx="46"  cy="54"  rx="20"  ry="6"   stroke="url(#ringAmber)" stroke-width="1.1" fill="none" filter="url(#glowAmber)"/>
+        <ellipse cx="54"  cy="62"  rx="12"  ry="4"   stroke="#ffe3b0" stroke-width="1" fill="none"/>
+      </g>
+
+      {# parlayan çekirdek #}
+      <circle cx="58" cy="66" r="16" fill="url(#cone-core)"/>
+      <circle cx="58" cy="66" r="3.2" fill="#ffffff"/>
+    </svg>
+    </div>
+
+    {# hero #}
+    <div class="splash-hero">
+      <h2 class="splash-title-xl">CMA-ES</h2>
+      <p class="splash-title-sub">Optimizasyon Teknikleri Projesi</p>
+    </div>
+
+    {# yükleme çubuğu + buton #}
+    <div class="splash-bottom">
+      <div class="splash-load-wrap" id="splashLoadWrap">
+        <div class="splash-load-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="splashLoadTrack">
+          <div class="splash-load-fill" id="splashProgress"></div>
+          <div class="splash-load-shine"></div>
+        </div>
+        <p class="splash-load-msg" id="splashLoadMsg">Yükleniyor…</p>
+      </div>
+      <button type="button" id="splashStartBtn" class="splash-start" disabled hidden>
+        <span class="label">Başla</span>
+      </button>
+    </div>
+
+    <svg class="splash-sparkle" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 2 L13.2 10 L22 12 L13.2 14 L12 22 L10.8 14 L2 12 L10.8 10 Z" fill="#e5efff"/>
+    </svg>
+  </div>
+
+  {# ---------------- Intro Pop-up (Başla sonrası) ---------------- #}
+  <div id="introPopup" class="intro-popup" hidden aria-hidden="true">
+    <div class="intro-popup-backdrop" data-intro-close></div>
+    <div class="intro-popup-card" role="dialog" aria-modal="true" aria-label="Final sunum kapağı">
+      <button type="button" id="introPopupClose" class="intro-popup-close" aria-label="Kapat">✕</button>
+      <img
+        class="intro-popup-image"
+        src="{{ url_for('static', filename='splash_final_slide.png') }}"
+        alt="Optimizasyon Teknikleri final sunum kapağı"
+        loading="eager"
+        decoding="sync"
+      >
+    </div>
+  </div>
+
+  {# ---------------- Ana uygulama ---------------- #}
+  <div class="app-root">
+    <header class="glass-header">
+      <div class="brand-block">
+        <h1 class="brand-title"><span class="brand-accent">CMA-ES</span> <span class="sep">|</span> <span class="brand-accent">Optimizasyon Teknikleri Dersi</span> <span class="sep">|</span> Covariance Matrix Adaptation Evolution Strategy</h1>
+      </div>
+      <button type="button" id="howBtn" class="how-btn" title="How it Works">
+        <span class="how-btn-ico">?</span>
+        <span class="how-btn-label">How it Works</span>
+      </button>
+    </header>
+
+    <div class="app-layout">
+      <aside class="sidebar">
+        <div class="glass-card">
+          <h3 class="card-title">Başlangıç Konfigürasyonu</h3>
+          <form id="cfgForm" class="stack-form">
+            <label class="field">
+              <span class="field-label">Fonksiyon</span>
+              <select name="function" id="function">
+                {% for key, meta in benchmarks.items() %}
+                <option value="{{ key }}">{{ meta.label }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <div class="field-row">
+              <label class="field"><span class="field-label">x₀</span><input type="number" step="any" name="x0" id="x0" value="0"></label>
+              <label class="field"><span class="field-label">y₀</span><input type="number" step="any" name="y0" id="y0" value="0"></label>
+            </div>
+            <label class="field">
+              <span class="field-label">σ₀</span>
+              <input type="number" step="any" name="sigma" id="sigma" value="100" min="1e-6">
+            </label>
+            <div class="field-row">
+              <label class="field"><span class="field-label">max_iter</span><input type="number" name="max_iter" id="max_iter" value="60" min="1" max="300"></label>
+              <label class="field"><span class="field-label">popsize</span><input type="number" name="popsize" id="popsize" placeholder="auto"></label>
+            </div>
+            <label class="field"><span class="field-label">seed</span><input type="number" name="seed" id="seed" value="42"></label>
+            <label class="option-check" title="Rastrigin/Schwefel için çoklu başlangıç denemesi yapar">
+              <input type="checkbox" id="multi_start" name="multi_start" checked>
+              <span>Multi-start (Rastrigin/Schwefel için önerilir)</span>
+            </label>
+            <details class="advanced">
+              <summary>Arama kutusu (opsiyonel)</summary>
+              <div class="field-row">
+                <label class="field"><span class="field-label">xmin</span><input type="number" step="any" name="xmin" id="xmin"></label>
+                <label class="field"><span class="field-label">xmax</span><input type="number" step="any" name="xmax" id="xmax"></label>
+              </div>
+              <div class="field-row">
+                <label class="field"><span class="field-label">ymin</span><input type="number" step="any" name="ymin" id="ymin"></label>
+                <label class="field"><span class="field-label">ymax</span><input type="number" step="any" name="ymax" id="ymax"></label>
+              </div>
+            </details>
+            <button type="submit" id="runBtn" class="btn-neon btn-run full">Çalıştır</button>
+            <span id="status" class="status"></span>
+          </form>
+        </div>
+
+        <div class="glass-card sim-card" id="simCard" hidden>
+          <h3 class="card-title">Çalıştırma Kontrolleri</h3>
+          <div class="ctrl-stack">
+            <button type="button" id="playBtn"  class="btn-neon btn-run full">Çalıştır / Oynat</button>
+            <button type="button" id="pauseBtn" class="btn-neon btn-pause full">Durdur</button>
+            <button type="button" id="resetBtn" class="btn-neon btn-reset full">Sıfırla</button>
+          </div>
+        </div>
+
+        <div class="glass-card speed-card" id="speedCard" hidden>
+          <h3 class="card-title">Simülasyon Hızı <span class="speed-state" id="speedState">Fast</span></h3>
+          <div class="speed-slider-wrap">
+            <input type="range" id="speedSlider" class="speed-slider" min="40" max="900" step="10" value="280" aria-label="Simülasyon hızı">
+          </div>
+          <div class="speed-row">
+            <span class="speed-tag">Slow</span>
+            <span class="speed-tag mid">Optimal</span>
+            <span class="speed-tag">Fast</span>
+          </div>
+        </div>
+
+        <div class="glass-card conv-card" id="convCard" hidden>
+          <h3 class="card-title">Yakınsama Geçmişi
+            <span class="conv-badge"><span id="convIterLabel">İterasyon: —</span><br><span id="convBestLabel">Best f(x): —</span></span>
+          </h3>
+          <div id="convPlot" class="conv-plot"></div>
+        </div>
+
+        {# Optimizasyon Hedefi kartı — yakınsama grafiğinin altında #}
+        <aside class="math-sidebar glass-card" id="mathPanel" aria-label="Optimizasyon hedefi">
+          <div class="math-float-head">
+            <strong>Optimizasyon Hedefi</strong> <span class="plot-badge">n = 2</span>
+          </div>
+          <div id="katex-formula" class="katex-block"></div>
+          <p id="katex-alt" class="katex-alt"></p>
+          <div id="katex-live" class="math-live"></div>
+        </aside>
+      </aside>
+
+      <main class="main-panel">
+        <div class="plots-row">
+          <div class="plot-wrap">
+            <div class="plot-heading">
+              <span class="plot-title">Kontur Analizi</span>
+              <span class="plot-badge">n = 2</span>
+            </div>
+            <div id="plot2d" class="plot"></div>
+          </div>
+          <div class="plot-wrap">
+            <div class="plot-heading">
+              <span class="plot-title">Yüzey Analizi</span>
+              <span class="plot-badge">n = 2</span>
+            </div>
+            <div id="plot3d" class="plot"></div>
+          </div>
+        </div>
+
+        <div class="glass-bar frame-scrubber" id="playbar" hidden>
+          <span class="frame-label" id="frameLabel">0 / 0</span>
+          <input type="range" id="frameSlider" class="frame-slider" min="0" max="0" value="0">
+        </div>
+
+        <footer class="app-footer">
+          <small>NumpyCMAES · Flask · Plotly.js · KaTeX</small>
+        </footer>
+      </main>
+    </div>
+
+  </div>
+
+  {# ---------------- How it Works — tam ekran sunum ---------------- #}
+  <div id="howModal" class="how-page" role="dialog" aria-modal="true" aria-labelledby="howTitle" hidden>
+    <div class="how-page-shell glass-card">
+      <header class="how-page-top">
+        <div class="how-page-brand">
+          <h2 id="howTitle"><span class="brand-accent">CMA-ES</span> <span class="sep">|</span> <span class="how-title-main">Sunum &amp; Rehber</span></h2>
+          <p class="how-page-lead">Optimizasyon yöntemleri bağlamında CMA-ES: türevli / türevsiz ayrımı, meta-sezgiseller, kara kutu optimizasyonu ve tam algoritma matematiği.</p>
+        </div>
+        <button type="button" class="how-close how-close--page" data-close aria-label="Uygulamaya dön">Uygulamaya dön ✕</button>
+      </header>
+
+      <nav class="how-tabs" role="tablist" aria-label="Sunum bölümleri">
+        <button type="button" class="how-tab is-active" role="tab" aria-selected="true"  aria-controls="how-panel-deriv"   id="how-tab-deriv">① Türevli</button>
+        <button type="button" class="how-tab" role="tab" aria-selected="false" aria-controls="how-panel-free"    id="how-tab-free">② Türevsiz</button>
+        <button type="button" class="how-tab" role="tab" aria-selected="false" aria-controls="how-panel-meta"    id="how-tab-meta">③ Meta / GA</button>
+        <button type="button" class="how-tab" role="tab" aria-selected="false" aria-controls="how-panel-bbox"    id="how-tab-bbox">④ Kara Kutu</button>
+        <button type="button" class="how-tab" role="tab" aria-selected="false" aria-controls="how-panel-cma"     id="how-tab-cma">⑤ CMA-ES Tam</button>
+        <button type="button" class="how-tab" role="tab" aria-selected="false" aria-controls="how-panel-compare" id="how-tab-compare">⑥ Karşılaştırma</button>
+        <button type="button" class="how-tab" role="tab" aria-selected="false" aria-controls="how-panel-use"     id="how-tab-use">⑦ Kullanım</button>
+        <button type="button" class="how-tab" role="tab" aria-selected="false" aria-controls="how-panel-demo"    id="how-tab-demo">⑧ Demo</button>
+        <button type="button" class="how-tab" role="tab" aria-selected="false" aria-controls="how-panel-cheat"   id="how-tab-cheat">Cheatsheet</button>
+      </nav>
+
+      <div class="how-panels">
+
+        {# ===== Tab 1: Türevli ===== #}
+        <section id="how-panel-deriv" class="how-tabpanel is-active" role="tabpanel" aria-labelledby="how-tab-deriv">
+          <div class="how-rich-grid">
+            <div class="how-rich-main">
+              <article class="how-slide-card">
+                <h3>Türev gerektiren optimizasyon</h3>
+                <p class="how-lead">Fonksiyonun <strong>gradyanı ∇f</strong> veya <strong>Hessian H</strong>'ı kullanılır. Pürüzsüz ve türevi hesaplanabilir fonksiyonlarda en hızlı yakınsama sağlar.</p>
+                <div class="how-formula-box">
+                  <div class="how-formula-title">Gradyan İnişi (GD)</div>
+                  <code class="how-formula">θ<sub>t+1</sub> = θ<sub>t</sub> − α · ∇f(θ<sub>t</sub>)</code>
+                  <div class="how-formula-title" style="margin-top:10px">Newton Adımı</div>
+                  <code class="how-formula">θ<sub>t+1</sub> = θ<sub>t</sub> − H<sup>−1</sup>(θ<sub>t</sub>) · ∇f(θ<sub>t</sub>)</code>
+                  <div class="how-formula-title" style="margin-top:10px">Momentum (Heavy Ball)</div>
+                  <code class="how-formula">v<sub>t+1</sub> = β·v<sub>t</sub> − α·∇f(θ<sub>t</sub>)</code>
+                  <code class="how-formula" style="display:block;margin-top:3px">θ<sub>t+1</sub> = θ<sub>t</sub> + v<sub>t+1</sub></code>
+                </div>
+                <ul class="how-bullets">
+                  <li><strong>Gradyan İnişi (GD/SGD)</strong> — basit, geniş ölçekte çalışır; öğrenme oranı kritik.</li>
+                  <li><strong>BFGS / L-BFGS</strong> — quasi-Newton; Hessian yaklaşımı, hızlı yakınsama.</li>
+                  <li><strong>Adam, RMSProp</strong> — adaptif öğrenme oranı; derin öğrenmede standart.</li>
+                  <li><strong>İç nokta (IPM)</strong> — kısıtlı konveks programlama; güçlü teori.</li>
+                </ul>
+                <p class="how-note"><strong>Sınır:</strong> Simülatör çıktısı, kara kutu veya türevsiz/gürültülü fonksiyonlarda bu yöntemler kullanılamaz. CMA-ES bu boşluğu doldurur.</p>
+              </article>
+            </div>
+            <div class="how-rich-side">
+              <article class="how-slide-card" style="padding:12px">
+                <div class="how-vis-label">GD vs Newton — kontur yolu</div>
+                <svg class="how-svg" viewBox="0 0 280 215" aria-hidden="true">
+                  <defs>
+                    <radialGradient id="cnt-bg" cx="63%" cy="60%" r="55%">
+                      <stop offset="0%" stop-color="#0d2060" stop-opacity="0.7"/>
+                      <stop offset="100%" stop-color="#060c1a" stop-opacity="0.9"/>
+                    </radialGradient>
+                  </defs>
+                  <rect width="280" height="215" rx="10" fill="url(#cnt-bg)"/>
+                  <ellipse cx="175" cy="128" rx="95" ry="74" fill="none" stroke="rgba(60,100,190,0.28)" stroke-width="1"/>
+                  <ellipse cx="175" cy="128" rx="74" ry="56" fill="none" stroke="rgba(70,120,210,0.36)" stroke-width="1"/>
+                  <ellipse cx="175" cy="128" rx="54" ry="40" fill="none" stroke="rgba(90,150,235,0.45)" stroke-width="1"/>
+                  <ellipse cx="175" cy="128" rx="36" ry="26" fill="none" stroke="rgba(120,180,255,0.55)" stroke-width="1.2"/>
+                  <ellipse cx="175" cy="128" rx="20" ry="14" fill="none" stroke="rgba(155,210,255,0.68)" stroke-width="1.3"/>
+                  <ellipse cx="175" cy="128" rx="9"  ry="6"  fill="none" stroke="rgba(185,230,255,0.82)" stroke-width="1.5"/>
+                  <polyline points="58,46 76,72 96,90 112,103 126,112 140,118 152,123 163,126 172,128"
+                    fill="none" stroke="#ff4060" stroke-width="2.2" stroke-dasharray="5 2.5"/>
+                  <circle cx="58"  cy="46"  r="3.2" fill="#ff4060"/>
+                  <circle cx="96"  cy="90"  r="2.5" fill="#ff4060"/>
+                  <circle cx="126" cy="112" r="2.5" fill="#ff4060"/>
+                  <circle cx="152" cy="123" r="2.5" fill="#ff4060"/>
+                  <polyline points="58,46 118,87 160,116 175,128" fill="none" stroke="#39ffb8" stroke-width="2.2"/>
+                  <circle cx="58"  cy="46"  r="3.2" fill="#39ffb8"/>
+                  <circle cx="118" cy="87"  r="2.5" fill="#39ffb8"/>
+                  <circle cx="160" cy="116" r="2.5" fill="#39ffb8"/>
+                  <circle cx="175" cy="128" r="5.5" fill="#ffd93d"/>
+                  <text x="182" y="125" font-size="9" fill="#ffd93d" font-weight="700">min</text>
+                  <rect x="6" y="186" width="268" height="22" rx="5" fill="rgba(0,0,0,0.4)"/>
+                  <line x1="14" y1="197" x2="32" y2="197" stroke="#ff4060" stroke-width="2" stroke-dasharray="5 2.5"/>
+                  <text x="36"  y="201" font-size="9" fill="#ff4060">GD (zigzag)</text>
+                  <line x1="104" y1="197" x2="122" y2="197" stroke="#39ffb8" stroke-width="2"/>
+                  <text x="126" y="201" font-size="9" fill="#39ffb8">Newton (direkt)</text>
+                  <circle cx="215" cy="197" r="4" fill="#ffd93d"/>
+                  <text x="221"  y="201" font-size="9" fill="#ffd93d">Min</text>
+                </svg>
+              </article>
+              <article class="how-slide-card" style="margin-top:10px;padding:14px">
+                <h4 style="margin:0 0 8px;font-size:12px;color:#ffd4a6">Ne zaman kullanılır?</h4>
+                <ul class="how-bullets" style="font-size:11.5px">
+                  <li>✅ Analitik, pürüzsüz fonksiyon</li>
+                  <li>✅ Gradyan ucuz hesaplanabilir</li>
+                  <li>✅ Büyük ölçek / derin öğrenme</li>
+                  <li>❌ Kara kutu / simülatör çıktısı</li>
+                  <li>❌ Gürültülü veya kesintili peyzaj</li>
+                </ul>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        {# ===== Tab 2: Türevsiz ===== #}
+        <section id="how-panel-free" class="how-tabpanel" role="tabpanel" aria-labelledby="how-tab-free" hidden>
+          <div class="how-rich-grid">
+            <div class="how-rich-main">
+              <article class="how-slide-card">
+                <h3>Türev gerektirmeyen (doğrudan arama)</h3>
+                <p class="how-lead">Yalnızca <strong>f(x)</strong> değeri kullanılır; gradyan veya Hessian hesaplamaz. Kara kutu veya pürüzsüz olmayan problemlerde kullanılabilir.</p>
+                <div class="how-formula-box">
+                  <div class="how-formula-title">Nelder–Mead: Yansıma adımı</div>
+                  <code class="how-formula">x<sub>r</sub> = x̄ + α(x̄ − x<sub>worst</sub>)</code>
+                  <div class="how-formula-title" style="margin-top:8px">Genişleme adımı</div>
+                  <code class="how-formula">x<sub>e</sub> = x̄ + γ(x<sub>r</sub> − x̄)</code>
+                  <div class="how-formula-title" style="margin-top:8px">Büzülme adımı</div>
+                  <code class="how-formula">x<sub>c</sub> = x̄ + ρ(x<sub>worst</sub> − x̄)</code>
+                </div>
+                <ul class="how-bullets">
+                  <li><strong>Nelder–Mead</strong> — n+1 köşeli simpleks deformasyon; düşük boyut için güçlü, yüksek boyutta bozulabilir.</li>
+                  <li><strong>Coordinate / pattern search</strong> — eksen boyunca adımlar; garantili yakınsama koşulları var.</li>
+                  <li><strong>COBYLA, BOBYQA</strong> — kuadratik model yaklaşımı ile kısıtlı optimizasyon.</li>
+                  <li><strong>Hook–Jeeves, Rosenbrock</strong> — erken dönem doğrudan arama klasikleri.</li>
+                </ul>
+                <p class="how-note">Bu yöntemler genellikle düşük boyutta çalışır. Yüksek boyut veya çok-modal yapıda CMA-ES gibi evrimsel yaklaşımlar çok daha güçlüdür.</p>
+              </article>
+            </div>
+            <div class="how-rich-side">
+              <article class="how-slide-card" style="padding:12px">
+                <div class="how-vis-label">Nelder–Mead Simplex evrimi</div>
+                <svg class="how-svg" viewBox="0 0 260 210" aria-hidden="true">
+                  <rect width="260" height="210" rx="10" fill="rgba(6,10,24,0.85)"/>
+                  <ellipse cx="168" cy="126" rx="78" ry="66" fill="none" stroke="rgba(60,100,190,0.24)" stroke-width="1"/>
+                  <ellipse cx="168" cy="126" rx="54" ry="44" fill="none" stroke="rgba(80,130,215,0.32)" stroke-width="1"/>
+                  <ellipse cx="168" cy="126" rx="34" ry="27" fill="none" stroke="rgba(110,165,240,0.42)" stroke-width="1"/>
+                  <ellipse cx="168" cy="126" rx="16" ry="12" fill="none" stroke="rgba(150,200,255,0.60)" stroke-width="1.2"/>
+                  <polygon points="52,55 128,50 100,118" fill="rgba(94,176,255,0.08)" stroke="rgba(94,176,255,0.50)" stroke-width="1.5"/>
+                  <polygon points="98,76 143,70 118,112" fill="rgba(94,176,255,0.11)" stroke="rgba(94,176,255,0.62)" stroke-width="1.5"/>
+                  <polygon points="128,92 152,87 143,112" fill="rgba(57,255,184,0.09)" stroke="rgba(57,255,184,0.58)" stroke-width="1.5"/>
+                  <polygon points="150,108 166,105 161,120" fill="rgba(57,255,184,0.18)" stroke="rgba(57,255,184,0.82)" stroke-width="2"/>
+                  <circle cx="168" cy="126" r="5.5" fill="#ffd93d"/>
+                  <text x="44" y="49" font-size="9" fill="rgba(94,176,255,0.75)">g=0</text>
+                  <text x="94" y="70" font-size="9" fill="rgba(94,176,255,0.85)">g=1</text>
+                  <text x="148" y="100" font-size="9" fill="rgba(57,255,184,0.85)">g=2</text>
+                  <text x="155" y="136" font-size="9" fill="#ffd93d">★ min</text>
+                  <text x="55" y="192" font-size="8.5" fill="#8b9ab8">Simpleks küçülüp minimuma yaklaşır</text>
+                </svg>
+              </article>
+              <article class="how-slide-card" style="margin-top:10px;padding:14px">
+                <h4 style="margin:0 0 8px;font-size:12px;color:#ffd4a6">CMA-ES farkı</h4>
+                <p class="how-tight" style="font-size:11.5px">Nelder-Mead tek bir simpleks kullanır; CMA-ES ise <strong>tüm bir dağılımı</strong> (elipsoid) optimize eder. Bu, CMA-ES'in arama yönünü ve ölçeğini istatistiksel olarak öğrenmesini sağlar.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        {# ===== Tab 3: Meta-sezgisel & GA ===== #}
+        <section id="how-panel-meta" class="how-tabpanel" role="tabpanel" aria-labelledby="how-tab-meta" hidden>
+          <div class="how-rich-grid">
+            <div class="how-rich-main">
+              <article class="how-slide-card">
+                <h3>Meta-sezgiseller ve Genetik Algoritma</h3>
+                <p class="how-lead">Popülasyon tabanlı stokastik arama; teorik garanti zayıf, fakat çok-modal ve kombinatoryal problemlerde güçlü global arama sağlar.</p>
+                <div class="how-two-col">
+                  <div>
+                    <h4>Genetik Algoritma (GA)</h4>
+                    <ul class="how-bullets">
+                      <li><strong>Kodlama</strong> — bit dizisi veya gerçel vektör.</li>
+                      <li><strong>Seçim</strong> — turnuva, rulet tekerleği.</li>
+                      <li><strong>Çaprazlama</strong> — tek/çift noktalı, uniform.</li>
+                      <li><strong>Mutasyon</strong> — bit çevirme veya Gaussian pertürbasyon.</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4>Diğer meta-sezgiseller</h4>
+                    <ul class="how-bullets">
+                      <li><strong>PSO</strong> — global en iyiyi takip eden parçacıklar.</li>
+                      <li><strong>DE</strong> — vektör farkı mutasyonu; sürekli uzayda güçlü.</li>
+                      <li><strong>SA</strong> — sıcaklıkla kontrollü kabul mekanizması.</li>
+                      <li><strong>ACO</strong> — feromon tabanlı kombinatoryal.</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="how-formula-box" style="margin-top:12px">
+                  <div class="how-formula-title">CMA-ES ile temel fark</div>
+                  <p class="how-tight">GA'da operatörler manuel tasarım gerektirir. CMA-ES'te popülasyon <strong>N(m, σ²C)</strong>'den örneklenir; dağılım parametreleri otomatik öğrenilir — hiperparametre az, adaptasyon yüksek.</p>
+                </div>
+              </article>
+            </div>
+            <div class="how-rich-side">
+              <article class="how-slide-card" style="padding:12px">
+                <div class="how-vis-label">GA: Çaprazlama &amp; Mutasyon</div>
+                <svg class="how-svg" viewBox="0 0 240 175" aria-hidden="true">
+                  <rect width="240" height="175" rx="10" fill="rgba(6,10,24,0.88)"/>
+                  <text x="10" y="26" font-size="9" fill="#8b9ab8">Ebeveyn 1</text>
+                  <rect x="10" y="32" width="22" height="15" rx="3" fill="#2d5de0"/><text x="17" y="43" font-size="8" fill="#fff" font-weight="700">1</text>
+                  <rect x="34" y="32" width="22" height="15" rx="3" fill="#2d5de0"/><text x="41" y="43" font-size="8" fill="#fff" font-weight="700">0</text>
+                  <rect x="58" y="32" width="22" height="15" rx="3" fill="#5eb0ff"/><text x="65" y="43" font-size="8" fill="#fff" font-weight="700">1</text>
+                  <rect x="82" y="32" width="22" height="15" rx="3" fill="#5eb0ff"/><text x="89" y="43" font-size="8" fill="#fff" font-weight="700">1</text>
+                  <rect x="106" y="32" width="22" height="15" rx="3" fill="#2d5de0"/><text x="113" y="43" font-size="8" fill="#fff" font-weight="700">0</text>
+                  <text x="10" y="67" font-size="9" fill="#8b9ab8">Ebeveyn 2</text>
+                  <rect x="10" y="72" width="22" height="15" rx="3" fill="#7b2de0"/><text x="17" y="83" font-size="8" fill="#fff" font-weight="700">0</text>
+                  <rect x="34" y="72" width="22" height="15" rx="3" fill="#7b2de0"/><text x="41" y="83" font-size="8" fill="#fff" font-weight="700">1</text>
+                  <rect x="58" y="72" width="22" height="15" rx="3" fill="#b060f0"/><text x="65" y="83" font-size="8" fill="#fff" font-weight="700">0</text>
+                  <rect x="82" y="72" width="22" height="15" rx="3" fill="#b060f0"/><text x="89" y="83" font-size="8" fill="#fff" font-weight="700">1</text>
+                  <rect x="106" y="72" width="22" height="15" rx="3" fill="#7b2de0"/><text x="113" y="83" font-size="8" fill="#fff" font-weight="700">1</text>
+                  <line x1="69" y1="26" x2="69" y2="98" stroke="#ffd93d" stroke-width="1.8" stroke-dasharray="3 2"/>
+                  <text x="58" y="110" font-size="8" fill="#ffd93d">Kesim</text>
+                  <text x="88" y="110" font-size="13" fill="#8b9ab8">↓</text>
+                  <text x="10" y="128" font-size="9" fill="#8b9ab8">Çocuk (+ mutasyon)</text>
+                  <rect x="10" y="133" width="22" height="15" rx="3" fill="#2d5de0"/><text x="17" y="144" font-size="8" fill="#fff" font-weight="700">1</text>
+                  <rect x="34" y="133" width="22" height="15" rx="3" fill="#2d5de0"/><text x="41" y="144" font-size="8" fill="#fff" font-weight="700">0</text>
+                  <rect x="58" y="133" width="22" height="15" rx="3" fill="#b060f0"/><text x="65" y="144" font-size="8" fill="#fff" font-weight="700">0</text>
+                  <rect x="82" y="133" width="22" height="15" rx="3" fill="#b060f0"/><text x="89" y="144" font-size="8" fill="#fff" font-weight="700">1</text>
+                  <rect x="106" y="133" width="22" height="15" rx="3" fill="#39ffb8"/><text x="110" y="144" font-size="7.5" fill="#000" font-weight="900">M</text>
+                  <text x="105" y="162" font-size="8" fill="#39ffb8">← mutasyon</text>
+                </svg>
+              </article>
+              <article class="how-slide-card" style="margin-top:10px;padding:12px">
+                <div class="how-vis-label">PSO parçacık hareketi</div>
+                <svg class="how-svg" viewBox="0 0 240 115" aria-hidden="true">
+                  <rect width="240" height="115" rx="10" fill="rgba(6,10,24,0.88)"/>
+                  <ellipse cx="158" cy="66" rx="68" ry="48" fill="none" stroke="rgba(60,100,190,0.22)" stroke-width="1"/>
+                  <ellipse cx="158" cy="66" rx="44" ry="30" fill="none" stroke="rgba(90,145,235,0.32)" stroke-width="1"/>
+                  <ellipse cx="158" cy="66" rx="22" ry="15" fill="none" stroke="rgba(140,195,255,0.48)" stroke-width="1"/>
+                  <circle cx="78"  cy="38"  r="4.5" fill="#5eb0ff" opacity="0.9"/>
+                  <line x1="78" y1="38" x2="100" y2="47" stroke="#5eb0ff" stroke-width="1.5"/>
+                  <polygon points="98,44 103,48 98,52" fill="#5eb0ff"/>
+                  <circle cx="108" cy="78"  r="4.5" fill="#5eb0ff" opacity="0.9"/>
+                  <line x1="108" y1="78" x2="128" y2="72" stroke="#5eb0ff" stroke-width="1.5"/>
+                  <polygon points="126,69 131,72 126,75" fill="#5eb0ff"/>
+                  <circle cx="128" cy="33"  r="4.5" fill="#5eb0ff" opacity="0.9"/>
+                  <line x1="128" y1="33" x2="143" y2="44" stroke="#5eb0ff" stroke-width="1.5"/>
+                  <polygon points="141,41 146,44 141,47" fill="#5eb0ff"/>
+                  <circle cx="188" cy="52"  r="4.5" fill="#5eb0ff" opacity="0.9"/>
+                  <line x1="188" y1="52" x2="174" y2="58" stroke="#5eb0ff" stroke-width="1.5"/>
+                  <polygon points="175,55 170,58 175,61" fill="#5eb0ff"/>
+                  <circle cx="158" cy="66" r="6" fill="#ffd93d"/>
+                  <text x="165" y="63" font-size="9" fill="#ffd93d" font-weight="700">g*</text>
+                </svg>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        {# ===== Tab 4: Kara Kutu ===== #}
+        <section id="how-panel-bbox" class="how-tabpanel" role="tabpanel" aria-labelledby="how-tab-bbox" hidden>
+          <div class="how-rich-grid">
+            <div class="how-rich-main">
+              <article class="how-slide-card">
+                <h3>Kara kutu optimizasyonu</h3>
+                <p class="how-lead"><strong>Kara kutu:</strong> iç yapı bilinmez veya kullanılamaz. Algoritmaya sadece <code>f: ℝⁿ → ℝ</code> değerlendirmesi sunulur; gradyan, Hessian yoktur.</p>
+                <div class="how-two-col">
+                  <div>
+                    <h4>Tipik senaryolar</h4>
+                    <ul class="how-bullets">
+                      <li>Fizik / CFD simülatör skoru</li>
+                      <li>Derin öğrenme hiperparametre arama</li>
+                      <li>Robotik kontrol politikası</li>
+                      <li>İlaç / malzeme tasarım deneyi</li>
+                      <li>Oyun motoru parametre ayarı</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4>Neden CMA-ES?</h4>
+                    <ul class="how-bullets">
+                      <li>Sadece <code>f(x)</code> değeri yeterli</li>
+                      <li>Arama dağılımını <strong>içsel olarak uyarlar</strong></li>
+                      <li>Gürültüye nispeten dayanıklı</li>
+                      <li>Orta boyutta (n ≤ ~300) verimli</li>
+                      <li>Multi-start ile global arama</li>
+                    </ul>
+                  </div>
+                </div>
+                <p class="how-note">Bütçe çok kısıtlıysa Bayesian Optimization tercih edilebilir. Bütçe orta-yüksek ve boyut ≤ birkaç yüz ise CMA-ES en iyi seçeneklerden biridir.</p>
+              </article>
+            </div>
+            <div class="how-rich-side">
+              <article class="how-slide-card" style="padding:12px">
+                <div class="how-vis-label">Kara kutu sistemi şeması</div>
+                <svg class="how-svg" viewBox="0 0 240 185" aria-hidden="true">
+                  <rect width="240" height="185" rx="10" fill="rgba(6,10,24,0.88)"/>
+                  <rect x="6" y="48" width="74" height="84" rx="9" fill="rgba(50,90,190,0.18)" stroke="rgba(94,176,255,0.52)" stroke-width="1.5"/>
+                  <text x="21" y="80" font-size="9.5" fill="#5eb0ff" font-weight="800">CMA-ES</text>
+                  <text x="14" y="94"  font-size="8" fill="#8b9ab8">m, σ, C</text>
+                  <text x="14" y="106" font-size="8" fill="#8b9ab8">öner x</text>
+                  <line x1="80" y1="90" x2="110" y2="90" stroke="#5eb0ff" stroke-width="1.6"/>
+                  <polygon points="108,87 114,90 108,93" fill="#5eb0ff"/>
+                  <text x="84" y="84" font-size="8" fill="#8b9ab8">x ∈ ℝⁿ</text>
+                  <rect x="114" y="64" width="64" height="52" rx="9" fill="rgba(12,12,20,0.95)" stroke="rgba(200,200,220,0.30)" stroke-width="1.5"/>
+                  <text x="131" y="86" font-size="13" fill="rgba(200,210,230,0.55)" font-weight="900">?</text>
+                  <text x="122" y="100" font-size="7.5" fill="#8b9ab8">simülatör</text>
+                  <text x="122" y="110" font-size="7.5" fill="#8b9ab8">/ deney</text>
+                  <line x1="178" y1="90" x2="208" y2="90" stroke="#39ffb8" stroke-width="1.6"/>
+                  <polygon points="206,87 212,90 206,93" fill="#39ffb8"/>
+                  <text x="182" y="84" font-size="8" fill="#39ffb8">f(x)</text>
+                  <path d="M212 93 Q228 138 44 138 Q8 138 8 132" fill="none" stroke="rgba(57,255,184,0.42)" stroke-width="1.3" stroke-dasharray="4 3"/>
+                  <polygon points="8,132 5,138 11,138" fill="rgba(57,255,184,0.58)"/>
+                  <text x="72" y="152" font-size="8" fill="rgba(57,255,184,0.7)">güncelle m, σ, C</text>
+                  <rect x="126" y="20" width="64" height="22" rx="5" fill="rgba(30,55,100,0.45)" stroke="rgba(90,140,210,0.30)" stroke-width="1"/>
+                  <text x="133" y="35" font-size="8.5" fill="#8bc3ff">Eval sayısı: g·λ</text>
+                  <text x="16" y="170" font-size="8" fill="#8b9ab8">Her iterasyonda λ değerlendirme yapılır</text>
+                </svg>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        {# ===== Tab 5: CMA-ES Tam Matematik ===== #}
+        <section id="how-panel-cma" class="how-tabpanel" role="tabpanel" aria-labelledby="how-tab-cma" hidden>
+          <div class="how-cma-grid">
+
+            <article class="how-slide-card how-cma-wide">
+              <h3>CMA-ES — Tam Algoritma Matematiği</h3>
+              <p class="how-lead">Hansen &amp; Ostermeier (2001) formülasyonu. Her nesil: örnekleme → sıralama → ortalama → σ → kovaryans güncelleme döngüsü.</p>
+              <div class="how-badge-row">
+                <span class="how-badge">Hansen &amp; Ostermeier 2001</span>
+                <span class="how-badge how-badge--warm">pycma 4.x referans</span>
+                <span class="how-badge how-badge--cool">n boyut · λ popülasyon · μ ebeveyn</span>
+              </div>
+            </article>
+
+            <article class="how-slide-card">
+              <h4 class="how-math-h">① Örnekleme</h4>
+              <p class="how-tight">Her iterasyonda λ aday çok değişkenli normal dağılımdan:</p>
+              <div class="how-math-block">
+                <code>x<sub>k</sub><sup>(g+1)</sup> ~ <em>N</em>(m<sup>(g)</sup>, (σ<sup>(g)</sup>)² · C<sup>(g)</sup>)</code>
+              </div>
+              <p class="how-tight" style="margin-top:8px">z<sub>k</sub> ~ <em>N</em>(0, I) ile eşdeğer:</p>
+              <div class="how-math-block">
+                <code>x<sub>k</sub> = m<sup>(g)</sup> + σ<sup>(g)</sup> · C<sup>(g)½</sup> · z<sub>k</sub></code>
+              </div>
+              <p class="how-note" style="margin-top:8px"><strong>m</strong>: ortalama vektör, <strong>σ</strong>: küresel adım, <strong>C</strong>: n×n kovaryans matrisi.</p>
+            </article>
+
+            <article class="how-slide-card">
+              <h4 class="how-math-h">② Sıralama &amp; Ağırlıklar</h4>
+              <p class="how-tight">Fitness'a göre sırala (küçükten büyüğe):</p>
+              <div class="how-math-block">
+                <code>f(x<sub>1:λ</sub>) ≤ f(x<sub>2:λ</sub>) ≤ … ≤ f(x<sub>λ:λ</sub>)</code>
+              </div>
+              <p class="how-tight" style="margin-top:8px">Log-uniform ağırlıklar:</p>
+              <div class="how-math-block">
+                <code>w̃<sub>i</sub> = ln(μ+½) − ln(i),  Σw<sub>i</sub>=1</code>
+              </div>
+              <div class="how-math-block" style="margin-top:6px">
+                <code>μ<sub>eff</sub> = (Σw<sub>i</sub>)² / Σw<sub>i</sub>² ≈ λ/4</code>
+              </div>
+            </article>
+
+            <article class="how-slide-card">
+              <h4 class="how-math-h">③ Ortalama Güncellemesi</h4>
+              <p class="how-tight">En iyi μ bireyin ağırlıklı ortalaması:</p>
+              <div class="how-math-block">
+                <code>m<sup>(g+1)</sup> = Σ<sub>i=1</sub><sup>μ</sup> w<sub>i</sub> · x<sub>i:λ</sub><sup>(g+1)</sup></code>
+              </div>
+              <p class="how-tight" style="margin-top:8px">Kısa gösterim: Δm = m<sup>(g+1)</sup> − m<sup>(g)</sup></p>
+              <p class="how-note" style="margin-top:8px">w<sub>1</sub> ≥ w<sub>2</sub> ≥ … ≥ w<sub>μ</sub> > 0. En iyi bireye en yüksek ağırlık verilir.</p>
+            </article>
+
+            <article class="how-slide-card">
+              <h4 class="how-math-h">④ σ Güncellemesi (CSA)</h4>
+              <p class="how-tight">Evrim yolu birikimi — Cumulative Step-size Adaptation:</p>
+              <div class="how-math-block">
+                <code>p<sub>σ</sub>' = (1−c<sub>σ</sub>)·p<sub>σ</sub> + √(c<sub>σ</sub>(2−c<sub>σ</sub>)μ<sub>eff</sub>) · C<sup>−½</sup> · Δm/σ</code>
+              </div>
+              <p class="how-tight" style="margin-top:8px">σ güncellemesi:</p>
+              <div class="how-math-block">
+                <code>σ' = σ · exp(c<sub>σ</sub>/d<sub>σ</sub> · (‖p<sub>σ</sub>‖/E‖N(0,I)‖ − 1))</code>
+              </div>
+              <div class="how-math-block" style="margin-top:6px">
+                <code>E‖N(0,I)‖ ≈ √n·(1 − 1/(4n) + 1/(21n²))</code>
+              </div>
+              <p class="how-note" style="margin-top:8px">‖p<sub>σ</sub>‖ büyükse σ artar; küçükse azalır.</p>
+            </article>
+
+            <article class="how-slide-card">
+              <h4 class="how-math-h">⑤ Kovaryans Güncellemesi</h4>
+              <p class="how-tight">Rank-1 evrim yolu (h<sub>σ</sub> = Heaviside göstergesi):</p>
+              <div class="how-math-block">
+                <code>p<sub>c</sub>' = (1−c<sub>c</sub>)·p<sub>c</sub> + h<sub>σ</sub>·√(c<sub>c</sub>(2−c<sub>c</sub>)μ<sub>eff</sub>) · Δm/σ</code>
+              </div>
+              <p class="how-tight" style="margin-top:8px">Tam kovaryans güncellemesi:</p>
+              <div class="how-math-block">
+                <code>C' = (1−c<sub>1</sub>−c<sub>μ</sub>) · C</code>
+                <code style="display:block;margin-top:3px">   + c<sub>1</sub> · p<sub>c</sub>·p<sub>c</sub><sup>T</sup>   [rank-1]</code>
+                <code style="display:block;margin-top:3px">   + c<sub>μ</sub> · Σ w<sub>i</sub> y<sub>i:λ</sub>·y<sub>i:λ</sub><sup>T</sup>   [rank-μ]</code>
+              </div>
+              <p class="how-tight" style="margin-top:8px;font-size:11px">y<sub>i:λ</sub> = (x<sub>i:λ</sub>−m) / σ</p>
+            </article>
+
+            <article class="how-slide-card how-cma-wide">
+              <h4 class="how-math-h">Algoritma akış şeması</h4>
+              <svg class="how-svg" viewBox="0 0 560 95" aria-hidden="true" style="width:100%;height:auto;max-height:100px">
+                <rect width="560" height="95" rx="10" fill="rgba(6,10,24,0.70)"/>
+                <rect x="4"   y="27" width="72" height="42" rx="8" fill="rgba(38,68,148,0.44)" stroke="rgba(94,176,255,0.60)" stroke-width="1.4"/>
+                <text x="14"  y="46" font-size="8.5" fill="#e0eaff" font-weight="700">Başlat</text>
+                <text x="10"  y="58" font-size="7.5" fill="#8b9ab8">m,σ,C</text>
+                <text x="10"  y="68" font-size="7.5" fill="#8b9ab8">g = 0</text>
+                <rect x="88"  y="27" width="72" height="42" rx="8" fill="rgba(38,68,148,0.44)" stroke="rgba(94,176,255,0.60)" stroke-width="1.4"/>
+                <text x="100" y="46" font-size="8.5" fill="#e0eaff" font-weight="700">Örnekle</text>
+                <text x="96"  y="58" font-size="7.5" fill="#8b9ab8">x_k~N(m,</text>
+                <text x="96"  y="68" font-size="7.5" fill="#8b9ab8">σ²C), k=1..λ</text>
+                <rect x="172" y="27" width="72" height="42" rx="8" fill="rgba(38,68,148,0.44)" stroke="rgba(94,176,255,0.60)" stroke-width="1.4"/>
+                <text x="182" y="46" font-size="8.5" fill="#e0eaff" font-weight="700">Hesapla</text>
+                <text x="178" y="58" font-size="7.5" fill="#8b9ab8">f_k = f(x_k)</text>
+                <text x="178" y="68" font-size="7.5" fill="#8b9ab8">k = 1..λ</text>
+                <rect x="256" y="27" width="72" height="42" rx="8" fill="rgba(38,68,148,0.44)" stroke="rgba(94,176,255,0.60)" stroke-width="1.4"/>
+                <text x="264" y="46" font-size="8.5" fill="#e0eaff" font-weight="700">Sırala</text>
+                <text x="260" y="58" font-size="7.5" fill="#8b9ab8">seç μ en iyi</text>
+                <text x="260" y="68" font-size="7.5" fill="#8b9ab8">güncelle m</text>
+                <rect x="340" y="27" width="72" height="42" rx="8" fill="rgba(56,28,130,0.44)" stroke="rgba(175,115,255,0.58)" stroke-width="1.4"/>
+                <text x="348" y="43" font-size="8.5" fill="#ddd0ff" font-weight="700">σ güncelle</text>
+                <text x="346" y="55" font-size="7.5" fill="#b0a0e0">p_σ birikimi</text>
+                <text x="346" y="65" font-size="7.5" fill="#b0a0e0">CSA adımı</text>
+                <rect x="424" y="27" width="72" height="42" rx="8" fill="rgba(56,28,130,0.44)" stroke="rgba(175,115,255,0.58)" stroke-width="1.4"/>
+                <text x="432" y="43" font-size="8.5" fill="#ddd0ff" font-weight="700">C güncelle</text>
+                <text x="430" y="55" font-size="7.5" fill="#b0a0e0">rank-1+rank-μ</text>
+                <text x="430" y="65" font-size="7.5" fill="#b0a0e0">p_c yolu</text>
+                <line x1="76"  y1="48" x2="88"  y2="48" stroke="#5eb0ff" stroke-width="1.4"/><polygon points="86,45 91,48 86,51" fill="#5eb0ff"/>
+                <line x1="160" y1="48" x2="172" y2="48" stroke="#5eb0ff" stroke-width="1.4"/><polygon points="170,45 175,48 170,51" fill="#5eb0ff"/>
+                <line x1="244" y1="48" x2="256" y2="48" stroke="#5eb0ff" stroke-width="1.4"/><polygon points="254,45 259,48 254,51" fill="#5eb0ff"/>
+                <line x1="328" y1="48" x2="340" y2="48" stroke="#5eb0ff" stroke-width="1.4"/><polygon points="338,45 343,48 338,51" fill="#5eb0ff"/>
+                <line x1="412" y1="48" x2="424" y2="48" stroke="#5eb0ff" stroke-width="1.4"/><polygon points="422,45 427,48 422,51" fill="#5eb0ff"/>
+                <path d="M496 69 Q496 83 124 83 Q124 69 124 69" fill="none" stroke="rgba(94,176,255,0.35)" stroke-width="1.2" stroke-dasharray="5 3"/>
+                <polygon points="122,69 127,69 124.5,63" fill="rgba(94,176,255,0.55)"/>
+                <text x="250" y="92" font-size="8" fill="rgba(94,176,255,0.60)">↺ g = g+1 (durma ölçütüne kadar)</text>
+              </svg>
+            </article>
+
+            <article class="how-slide-card">
+              <h4 class="how-math-h">Varsayılan parametreler (n boyut)</h4>
+              <div class="how-table-wrap">
+                <table class="how-table how-table--compact">
+                  <thead><tr><th>Sembol</th><th>Anlamı</th><th>Varsayılan</th></tr></thead>
+                  <tbody>
+                    <tr><td>λ</td><td>Popülasyon boyutu</td><td>4 + ⌊3 ln n⌋</td></tr>
+                    <tr><td>μ</td><td>Ebeveyn sayısı</td><td>λ / 2</td></tr>
+                    <tr><td>c<sub>σ</sub></td><td>σ birikimli öğrenme</td><td>(μ<sub>eff</sub>+2)/(n+μ<sub>eff</sub>+5)</td></tr>
+                    <tr><td>d<sub>σ</sub></td><td>σ sönümleme</td><td>≈ 1 + 2·max(0,√…) + c<sub>σ</sub></td></tr>
+                    <tr><td>c<sub>c</sub></td><td>C birikimli öğrenme</td><td>4/(n+4)</td></tr>
+                    <tr><td>c<sub>1</sub></td><td>Rank-1 güncelleme</td><td>2/(n+√2)²</td></tr>
+                    <tr><td>c<sub>μ</sub></td><td>Rank-μ güncelleme</td><td>min(1−c<sub>1</sub>, 2·…)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="how-slide-card">
+              <h4 class="how-math-h">Kovaryans adaptasyonu — görsel özet</h4>
+              <svg class="how-svg" viewBox="0 0 370 130" aria-hidden="true">
+                <rect width="370" height="130" rx="10" fill="rgba(6,10,24,0.70)"/>
+                <ellipse cx="62"  cy="65" rx="44" ry="40" fill="rgba(94,176,255,0.07)"  stroke="rgba(94,176,255,0.44)" stroke-width="1.5" stroke-dasharray="4 2"/>
+                <circle  cx="62"  cy="65" r="3.5" fill="#5eb0ff"/>
+                <circle cx="78"  cy="48" r="2.5" fill="#5eb0ff" opacity="0.55"/>
+                <circle cx="46"  cy="52" r="2.5" fill="#5eb0ff" opacity="0.55"/>
+                <circle cx="76"  cy="80" r="2.5" fill="#5eb0ff" opacity="0.55"/>
+                <circle cx="44"  cy="76" r="2.5" fill="#5eb0ff" opacity="0.55"/>
+                <text x="38" y="114" font-size="8.5" fill="#8b9ab8">g=0: C≈I</text>
+                <text x="108" y="68" font-size="18" fill="#5eb0ff">→</text>
+                <ellipse cx="198" cy="65" rx="50" ry="26" fill="rgba(57,255,184,0.07)" stroke="rgba(57,255,184,0.44)" stroke-width="1.5" stroke-dasharray="4 2" transform="rotate(-22,198,65)"/>
+                <circle  cx="198" cy="65" r="3.5" fill="#39ffb8"/>
+                <circle cx="220" cy="52" r="2.5" fill="#39ffb8" opacity="0.55"/>
+                <circle cx="176" cy="58" r="2.5" fill="#39ffb8" opacity="0.55"/>
+                <circle cx="215" cy="74" r="2.5" fill="#39ffb8" opacity="0.55"/>
+                <text x="170" y="114" font-size="8.5" fill="#8b9ab8">g=k: C döndü</text>
+                <text x="258" y="68" font-size="18" fill="#39ffb8">→</text>
+                <ellipse cx="316" cy="65" rx="17" ry="9"  fill="rgba(255,217,61,0.10)" stroke="rgba(255,217,61,0.65)" stroke-width="1.8" transform="rotate(-22,316,65)"/>
+                <circle  cx="316" cy="65" r="4.5" fill="#ffd93d"/>
+                <circle cx="326" cy="60" r="2"   fill="#ffd93d" opacity="0.65"/>
+                <circle cx="308" cy="68" r="2"   fill="#ffd93d" opacity="0.65"/>
+                <text x="292" y="114" font-size="8.5" fill="#ffd93d">g=G: yakınsadı</text>
+              </svg>
+            </article>
+
+          </div>
+        </section>
+
+        {# ===== Tab 6: Karşılaştırma ===== #}
+        <section id="how-panel-compare" class="how-tabpanel" role="tabpanel" aria-labelledby="how-tab-compare" hidden>
+          <div class="how-rich-grid">
+            <div class="how-rich-main">
+              <article class="how-slide-card">
+                <h3>Yöntemlerin Karşılaştırması</h3>
+                <div class="how-table-wrap">
+                  <table class="how-table">
+                    <thead><tr><th>Kriter</th><th>CMA-ES</th><th>Gradyan (GD/BFGS)</th><th>GA / PSO</th><th>Bayes. Opt.</th></tr></thead>
+                    <tbody>
+                      <tr><th>Türev gereksinimi</th><td>❌ Gerekmez</td><td>✅ Gerekir</td><td>❌ Gerekmez</td><td>❌ Gerekmez</td></tr>
+                      <tr><th>Gürültü dayanıklılığı</th><td>⚡ Yüksek</td><td>🔴 Düşük</td><td>🟡 Orta</td><td>⚡ Yüksek</td></tr>
+                      <tr><th>Yüksek boyut (n&gt;100)</th><td>🟡 Orta</td><td>✅ İyi</td><td>🔴 Zayıf</td><td>🔴 Zayıf</td></tr>
+                      <tr><th>Çok-modal peyzaj</th><td>🟡 Multi-start ile</td><td>🔴 Yerel min.</td><td>✅ Global</td><td>🟡 Orta</td></tr>
+                      <tr><th>Değerlendirme verimliliği</th><td>⚡ Yüksek</td><td>✅ Az iter.</td><td>🔴 Çok eval.</td><td>⚡ En verimli</td></tr>
+                      <tr><th>Kara kutu uyumu</th><td>✅ Doğal</td><td>🔴 Hayır</td><td>✅ Evet</td><td>✅ Evet</td></tr>
+                      <tr><th>Teori sağlamlığı</th><td>✅ ES istatistiği</td><td>✅ Konveks analiz</td><td>🔴 Sezgisel</td><td>✅ GP / Bayes</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="how-note" style="margin-top:12px"><strong>CMA-ES en güçlü olduğu yer:</strong> sürekli değişkenli, türevsiz, gürültülü orta-boyutlu problemler. Mühendislik tasarımı, robotik politika ve ML hiperparametre ayarı için birincil tercih.</p>
+              </article>
+            </div>
+            <div class="how-rich-side">
+              <article class="how-slide-card" style="padding:12px">
+                <div class="how-vis-label">Radar: 6 kriter karşılaştırması</div>
+                <svg class="how-svg" viewBox="0 0 220 225" aria-hidden="true">
+                  <rect width="220" height="225" rx="10" fill="rgba(6,10,24,0.88)"/>
+                  <polygon points="110,42 183,84 183,152 110,194 37,152 37,84" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                  <polygon points="110,62 161,91 161,143 110,172 59,143 59,91"  fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+                  <polygon points="110,80 142,99 142,131 110,150 78,131 78,99"  fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="1"/>
+                  <line x1="110" y1="118" x2="110" y2="42"  stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                  <line x1="110" y1="118" x2="183" y2="84"  stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                  <line x1="110" y1="118" x2="183" y2="152" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                  <line x1="110" y1="118" x2="110" y2="194" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                  <line x1="110" y1="118" x2="37"  y2="152" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                  <line x1="110" y1="118" x2="37"  y2="84"  stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+                  <text x="97"  y="37"  font-size="8" fill="#8b9ab8">Hız</text>
+                  <text x="186" y="82"  font-size="8" fill="#8b9ab8">Gürültü</text>
+                  <text x="186" y="156" font-size="8" fill="#8b9ab8">Global</text>
+                  <text x="88"  y="207" font-size="8" fill="#8b9ab8">Boyut</text>
+                  <text x="14"  y="156" font-size="8" fill="#8b9ab8">Kara kutu</text>
+                  <text x="16"  y="82"  font-size="8" fill="#8b9ab8">Teori</text>
+                  <polygon points="110,66 164,84 153,141 110,161 54,148 61,90"
+                    fill="rgba(94,176,255,0.18)" stroke="rgba(94,176,255,0.82)" stroke-width="2"/>
+                  <polygon points="110,55 130,107 128,128 110,181 98,123 51,84"
+                    fill="rgba(57,255,184,0.08)" stroke="rgba(57,255,184,0.58)" stroke-width="1.5" stroke-dasharray="5 3"/>
+                  <polygon points="110,85 145,97 161,146 110,145 62,141 88,104"
+                    fill="rgba(240,180,78,0.08)" stroke="rgba(240,180,78,0.52)" stroke-width="1.5" stroke-dasharray="3 2"/>
+                  <line x1="8"   y1="213" x2="22"  y2="213" stroke="rgba(94,176,255,0.85)" stroke-width="2"/>
+                  <text x="25"   y="217" font-size="8" fill="#5eb0ff">CMA-ES</text>
+                  <line x1="78"  y1="213" x2="92"  y2="213" stroke="rgba(57,255,184,0.70)" stroke-width="1.5" stroke-dasharray="5 3"/>
+                  <text x="95"   y="217" font-size="8" fill="#39ffb8">GD</text>
+                  <line x1="118" y1="213" x2="132" y2="213" stroke="rgba(240,180,78,0.65)" stroke-width="1.5" stroke-dasharray="3 2"/>
+                  <text x="135"  y="217" font-size="8" fill="#f0b44e">GA/PSO</text>
+                </svg>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        {# ===== Tab 7: Kullanım Alanları ===== #}
+        <section id="how-panel-use" class="how-tabpanel" role="tabpanel" aria-labelledby="how-tab-use" hidden>
+          <article class="how-slide-card">
+            <h3>Hangi alanlarda, nasıl kullanılır?</h3>
+            <div class="how-domain-grid">
+              <div class="how-domain-card">
+                <svg class="how-domain-ico" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="rgba(94,176,255,0.15)" stroke="rgba(94,176,255,0.45)" stroke-width="1.4"/><text x="8" y="27" font-size="18" fill="#5eb0ff">⚙</text></svg>
+                <div class="how-domain-title">Mühendislik Tasarımı</div>
+                <p class="how-domain-desc">Şekil / malzeme parametrelerini CAE veya CFD simülatörü ile optimize eder. Gradyan yoktur; yalnızca çözücü skoru kullanılır.</p>
+              </div>
+              <div class="how-domain-card">
+                <svg class="how-domain-ico" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="rgba(57,255,184,0.12)" stroke="rgba(57,255,184,0.42)" stroke-width="1.4"/><text x="9" y="27" font-size="18" fill="#39ffb8">🤖</text></svg>
+                <div class="how-domain-title">Robotik &amp; Kontrol</div>
+                <p class="how-domain-desc">Politika parametreleri (PD kazanç, ağırlık matrisi) simülasyonla öğretilir. Yüksek gürültü toleransı kritik avantajdır.</p>
+              </div>
+              <div class="how-domain-card">
+                <svg class="how-domain-ico" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="rgba(240,180,78,0.13)" stroke="rgba(240,180,78,0.42)" stroke-width="1.4"/><text x="9" y="27" font-size="18" fill="#f0b44e">🧠</text></svg>
+                <div class="how-domain-title">ML Hiperparametre</div>
+                <p class="how-domain-desc">Öğrenme oranı, ağ mimarisi, regülarizasyon vs. CV skoru üzerinden black-box arama. HPO için yaygın seçim.</p>
+              </div>
+              <div class="how-domain-card">
+                <svg class="how-domain-ico" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="rgba(216,96,114,0.12)" stroke="rgba(216,96,114,0.42)" stroke-width="1.4"/><text x="10" y="27" font-size="18" fill="#d86072">📈</text></svg>
+                <div class="how-domain-title">Finans &amp; Risk</div>
+                <p class="how-domain-desc">Stokastik volatilite veya faiz modeli kalibrasyonu; piyasa verisi üzerinden kara-kutu fitness fonksiyonu.</p>
+              </div>
+              <div class="how-domain-card">
+                <svg class="how-domain-ico" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="rgba(150,120,255,0.13)" stroke="rgba(150,120,255,0.42)" stroke-width="1.4"/><text x="10" y="27" font-size="18" fill="#a08fff">🔬</text></svg>
+                <div class="how-domain-title">Bilimsel Hesaplama</div>
+                <p class="how-domain-desc">Enerji minimizasyonu (protein katlama, malzeme), adaptif mesh kalitesi, iteratif çözücü parametre ayarı.</p>
+              </div>
+              <div class="how-domain-card">
+                <svg class="how-domain-ico" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="rgba(0,255,213,0.10)" stroke="rgba(0,255,213,0.38)" stroke-width="1.4"/><text x="10" y="27" font-size="18" fill="#00ffd5">🎮</text></svg>
+                <div class="how-domain-title">Oyun &amp; Simülasyon</div>
+                <p class="how-domain-desc">NPC davranış parametreleri, prosedürel harita ayarı, oyun AI politikaları; simülatör skoru ile reward optimize.</p>
+              </div>
+            </div>
+            <p class="how-note" style="margin-top:14px">Pratikte genellikle <strong>çoklu başlangıç (multi-start)</strong> veya yeniden başlatma stratejisi ile birleştirilir. Bu uygulamada Rastrigin/Schwefel için bu seçenek mevcuttur.</p>
+          </article>
+        </section>
+
+        {# ===== Tab 8: Demo ===== #}
+        <section id="how-panel-demo" class="how-tabpanel" role="tabpanel" aria-labelledby="how-tab-demo" hidden>
+          <article class="how-slide-card">
+            <h3>Hızlı Başlangıç — Demoyu Dene</h3>
+            <p class="how-lead">Aşağıdaki düğmeler formu hazır ayarlarla doldurur. <strong>Uygulamaya dön</strong> dedikten sonra <strong>Çalıştır</strong>'a basarak CMA-ES animasyonunu izleyebilirsin.</p>
+            <div class="how-demo-grid">
+              <div class="how-demo-scenario">
+                <div class="how-demo-scenario-title">🌊 Schwefel (zor, çok-modal)</div>
+                <p class="how-tight">500×500 peyzaj. Multi-start açık; gerçek global minimumu (x*≈420.97) bulmaya çalışır.</p>
+                <button type="button" class="btn-neon how-demo-btn" id="howDemoSchwefel">Bu senaryoyu yükle</button>
+              </div>
+              <div class="how-demo-scenario">
+                <div class="how-demo-scenario-title">🦔 Rastrigin (çok-modal)</div>
+                <p class="how-tight">Çok sayıda lokal minimum içerir. Multi-start ile x*=(0,0) hedeflenir.</p>
+                <button type="button" class="btn-neon how-demo-btn" id="howDemoRastrigin">Bu senaryoyu yükle</button>
+              </div>
+              <div class="how-demo-scenario">
+                <div class="how-demo-scenario-title">⚪ Sphere (kolay, tek minimum)</div>
+                <p class="how-tight">Tekil minimum x*=(0,0). CMA-ES'in temel yakınsama davranışını görmek için ideal.</p>
+                <button type="button" class="btn-neon how-demo-btn how-demo-btn--ghost" id="howDemoSphere">Bu senaryoyu yükle</button>
+              </div>
+              <div class="how-demo-scenario">
+                <div class="how-demo-scenario-title">🔵 Himmelblau (4 eşit minimum)</div>
+                <p class="how-tight">4 farklı global minimum. CMA-ES hangisine gider? Seed değiştirerek dene.</p>
+                <button type="button" class="btn-neon how-demo-btn how-demo-btn--ghost" id="howDemoHimmelblau">Bu senaryoyu yükle</button>
+              </div>
+            </div>
+            <p class="how-note how-note--small">Schwefel ve Rastrigin için multi-start otomatik açılır (~3–5 sn sürer). Hızlı demo için Sphere önerilir.</p>
+          </article>
+
+          <article class="how-slide-card how-airfield-card">
+            <h3>Hava Sahası — CMA-ES ile Öğrenen Uçak</h3>
+            <p class="how-lead">Her birey, <strong>8 → 8 → 1 (tanh)</strong> küçük bir sinir ağıdır (θ boyutu <strong>81</strong>). CMA-ES bu ağırlık vektörünü optimize eder: uçaklar daire engelleri aşıp sağdaki hedefe en kısa sürede ulaşmaya çalışır. Sol kanvasta tüm popülasyon eşzamanlı uçar; sağ panelde iterasyon, σ, en iyi bireyin sinir ağı ve fitness eğrisi görünür.</p>
+
+            <div class="how-airfield-layout">
+              <div class="how-airfield-stage">
+                <canvas
+                  id="airfieldCanvas"
+                  class="how-airfield-canvas"
+                  width="960"
+                  height="640"
+                  aria-label="Hava sahası simülasyonu"></canvas>
+                <div class="how-airfield-stage-foot">
+                  <div class="how-airfield-progress" role="presentation">
+                    <div class="how-airfield-progress-track">
+                      <div class="how-airfield-progress-fill" id="airfieldGenFill" style="width:0%"></div>
+                    </div>
+                    <span class="how-airfield-progress-label" id="airfieldGenLabel">Jenerasyon —</span>
+                  </div>
+                  <div class="how-airfield-progress" role="presentation">
+                    <div class="how-airfield-progress-track">
+                      <div class="how-airfield-progress-fill how-airfield-progress-fill--sub" id="airfieldStepFill" style="width:0%"></div>
+                    </div>
+                    <span class="how-airfield-progress-label" id="airfieldStepLabel">Adım —</span>
+                  </div>
+                </div>
+                <div class="how-airfield-legend" aria-hidden="true">
+                  <span class="how-airfield-legend-item how-airfield-legend-item--best"><span class="dot"></span>en iyi birey</span>
+                  <span class="how-airfield-legend-item how-airfield-legend-item--goal"><span class="dot"></span>hedef</span>
+                  <span class="how-airfield-legend-item how-airfield-legend-item--crash"><span class="dot"></span>çarpma</span>
+                  <span class="how-airfield-legend-item how-airfield-legend-item--reached"><span class="dot"></span>ulaşan</span>
+                </div>
+              </div>
+
+              <aside class="how-airfield-side">
+                <div class="how-airfield-controls">
+                  <button type="button" class="btn-neon" id="airfieldStart">▶ Başlat / Eğit</button>
+                  <button type="button" class="btn-neon btn-neon--ghost" id="airfieldPause" disabled>⏸ Duraklat</button>
+                  <button type="button" class="btn-neon btn-neon--ghost" id="airfieldReset" disabled>↺ Sıfırla</button>
+                </div>
+
+                <div class="how-airfield-params">
+                  <label class="how-airfield-field">
+                    <span>Zorluk</span>
+                    <select id="airfieldDifficulty">
+                      <option value="easy">Kolay · 3 engel</option>
+                      <option value="medium" selected>Orta · 5 engel</option>
+                      <option value="hard">Zor · 7 engel</option>
+                    </select>
+                  </label>
+                  <label class="how-airfield-field">
+                    <span>Seed</span>
+                    <input type="number" id="airfieldSeed" value="42" min="0" step="1">
+                  </label>
+                  <label class="how-airfield-field">
+                    <span>İterasyon</span>
+                    <input type="number" id="airfieldIter" value="30" min="5" max="80" step="1">
+                  </label>
+                  <label class="how-airfield-field">
+                    <span>Oynatma hızı</span>
+                    <input type="range" id="airfieldSpeed" min="1" max="6" step="1" value="3">
+                  </label>
+                </div>
+
+                <div class="how-airfield-stats" id="airfieldStats">
+                  <div class="stat"><span class="k">Jenerasyon</span><span class="v" id="afStatIter">—</span></div>
+                  <div class="stat"><span class="k">En iyi skor</span><span class="v" id="afStatBest">—</span></div>
+                  <div class="stat"><span class="k">Şimdiki min</span><span class="v" id="afStatCur">—</span></div>
+                  <div class="stat"><span class="k">σ (CMA)</span><span class="v" id="afStatSigma">—</span></div>
+                  <div class="stat"><span class="k">Hedefe ulaşan</span><span class="v" id="afStatReached">—</span></div>
+                  <div class="stat"><span class="k">θ boyutu</span><span class="v" id="afStatDim">81</span></div>
+                  <div class="stat"><span class="k">Popülasyon</span><span class="v" id="afStatPop">—</span></div>
+                  <div class="stat"><span class="k">Değerlendirme</span><span class="v" id="afStatEval">—</span></div>
+                </div>
+
+                <div class="how-airfield-nn">
+                  <div class="how-airfield-subtitle">En iyi bireyin sinir ağı</div>
+                  <svg id="airfieldNN" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet"
+                       xmlns="http://www.w3.org/2000/svg" aria-label="MLP ağırlık görünümü"></svg>
+                  <p class="how-airfield-subnote">Çizgi kalınlığı ∝ |w|, renk ağırlığın işaretini gösterir. CMA-ES her jenerasyonda θ'yı günceller; burada en iyi bireyin ağı canlı olarak izlenir.</p>
+                </div>
+
+                <div class="how-airfield-spark">
+                  <div class="how-airfield-subtitle">Fitness eğrisi (best &amp; mean)</div>
+                  <canvas id="airfieldSpark" width="300" height="90"></canvas>
+                </div>
+
+                <p class="how-airfield-status" id="airfieldStatus" role="status" aria-live="polite">Başlat'a basarak CMA-ES eğitimini çalıştır. Uçaklar kendi kendine parkuru öğrenene kadar izleyebilirsin.</p>
+              </aside>
+            </div>
+          </article>
+        </section>
+
+        {# ===== Cheatsheet ===== #}
+        <section id="how-panel-cheat" class="how-tabpanel how-tabpanel--cheat" role="tabpanel" aria-labelledby="how-tab-cheat" hidden>
+          <p class="how-cheat-hint">Hızlı hatırlatma — tek ekranda özet kartlar ve pseudokod.</p>
+          <div class="how-grid">
+            <div class="how-col how-col--left">
+              <article class="how-card">
+                <header class="how-card-head"><span class="how-chip">NEDİR?</span><span class="how-dot"></span></header>
+                <h4>CMA-ES: Kovaryans Matrisi Adaptasyonu Evrim Stratejisi</h4>
+                <p>Karmaşık, sürekli, türevsiz optimizasyon için güçlü bir <b>evrimsel algoritma</b>.</p>
+              </article>
+              <article class="how-card">
+                <header class="how-card-head"><span class="how-chip">NE İŞE YARAR?</span><span class="how-dot"></span></header>
+                <p>Arama uzayında en iyi çözümü bulmak için <b>popülasyon dağılımının</b> şekli ve yönünü <b>adapte</b> eder.</p>
+                <p>Geleneksel yöntemlerin başarısız olduğu, <b>gürültülü</b> veya <b>çok-modlu</b> peyzajlarda etkilidir.</p>
+              </article>
+              <article class="how-card">
+                <header class="how-card-head"><span class="how-chip">UYGULAMA ALANLARI</span><span class="how-dot"></span></header>
+                <ul class="how-list">
+                  <li><span class="li-ico">⚙</span> Mühendislik Tasarımı</li>
+                  <li><span class="li-ico">🧠</span> ML Hiperparametre</li>
+                  <li><span class="li-ico">🤖</span> Robot Kontrolü</li>
+                  <li><span class="li-ico">📈</span> Finans / Risk</li>
+                  <li><span class="li-ico">🔬</span> Bilimsel hesaplama</li>
+                </ul>
+              </article>
+            </div>
+            <div class="how-col how-col--center">
+              <article class="how-card process-card">
+                <header class="how-card-head">
+                  <span class="how-chip how-chip--warm">SÜREÇ</span>
+                  <h4 class="process-title">Covariance Matrix Adaptation</h4>
+                </header>
+                <div class="proc-stage">
+                  <div class="proc-node"><div class="proc-grid">
+                    <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                    <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                    <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                    <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                  </div><span class="proc-label">Popülasyon</span></div>
+                  <span class="proc-arrow"></span>
+                  <div class="proc-node"><div class="proc-ring proc-ring--a"></div><span class="proc-label">Seçim</span></div>
+                  <span class="proc-arrow proc-arrow--hot"></span>
+                  <div class="proc-node"><div class="proc-ring proc-ring--b"></div><span class="proc-label">Hedef</span></div>
+                </div>
+                <div class="proc-core">
+                  <div class="core-flare"></div>
+                  <div class="core-orbit"></div>
+                  <div class="core-orbit core-orbit--b"></div>
+                  <div class="core-orbit core-orbit--c"></div>
+                  <div class="proc-labels">
+                    <span class="pl pl-left">popülasyon</span>
+                    <span class="pl pl-mid">Nesiller</span>
+                    <span class="pl pl-right">CMA-ES elips</span>
+                  </div>
+                </div>
+              </article>
+            </div>
+            <div class="how-col how-col--right">
+              <article class="how-card code-card">
+                <header class="how-card-head">
+                  <span class="how-chip how-chip--cool">PSEUDOKOD</span>
+                  <span class="how-dot how-dot--cool"></span>
+                </header>
+<pre class="code-block"><code>BEGIN CMA-ES
+Initialize: <b>m₀</b>, <b>σ₀</b>, <b>C₀=I</b>
+LOOP g = 1, 2, …
+
+  <i>// Sample λ candidates</i>
+  x<sub>k</sub> ~ N(m, σ² C), k=1..λ
+
+  <i>// Evaluate &amp; rank</i>
+  f<sub>k</sub> = f(x<sub>k</sub>); sort ascending
+
+  <i>// Update mean</i>
+  m' = Σ w<sub>i</sub> x<sub>i:λ</sub>
+
+  <i>// Update σ (CSA)</i>
+  p<sub>σ</sub>' = (1-c<sub>σ</sub>)p<sub>σ</sub> + √(..) C<sup>-½</sup>Δm/σ
+  σ' = σ·exp(c<sub>σ</sub>/d<sub>σ</sub>·(‖p<sub>σ</sub>‖/χ<sub>n</sub>-1))
+
+  <i>// Update C (rank-1 + rank-μ)</i>
+  p<sub>c</sub>' = (1-c<sub>c</sub>)p<sub>c</sub> + h<sub>σ</sub>·√(..) Δm/σ
+  C' = (1-c<sub>1</sub>-c<sub>μ</sub>)C
+     + c<sub>1</sub>·p<sub>c</sub>p<sub>c</sub><sup>T</sup>
+     + c<sub>μ</sub>·Σ w<sub>i</sub>y<sub>i</sub>y<sub>i</sub><sup>T</sup>
+
+UNTIL tolfun or tolx
+END CMA-ES</code></pre>
+              </article>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <svg class="how-sparkle" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2 L13.2 10 L22 12 L13.2 14 L12 22 L10.8 14 L2 12 L10.8 10 Z" fill="#e5efff"/>
+      </svg>
+
+    </div>
+  </div>
+
+
+  <script>
+    window.DEFAULTS = {
+      {% for key, meta in benchmarks.items() %}
+      "{{ key }}": {
+        bounds: {{ meta.bounds | tojson }},
+        x0: {{ meta.x0 | tojson }},
+        sigma: {{ meta.sigma }},
+        optimum: {{ meta.optimum | tojson }},
+        formula: {{ meta.formula | tojson }}
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    };
+    window.SCHWEFEL_ALPHA_DISPLAY = "418.9829";
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='airfield_demo.js') }}"></script>
+</body>
+</html>
