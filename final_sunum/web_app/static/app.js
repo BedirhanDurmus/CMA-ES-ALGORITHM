@@ -96,6 +96,36 @@ const $ = (id) => document.getElementById(id);
     });
   }
 
+  function preloadCritical(urls, maxWaitMs = 1200) {
+    return new Promise((resolve) => {
+      if (!urls.length) {
+        resolve();
+        return;
+      }
+      let done = 0;
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        resolve();
+      };
+      const timer = setTimeout(finish, maxWaitMs);
+      urls.forEach((url) => {
+        const img = new Image();
+        img.fetchPriority = "high";
+        img.decoding = "sync";
+        img.onload = img.onerror = () => {
+          done += 1;
+          if (done >= urls.length) {
+            clearTimeout(timer);
+            finish();
+          }
+        };
+        img.src = url;
+      });
+    });
+  }
+
   function updateCaption(item) {
     if (!captionText) return;
     captionText.textContent = item.label || "CMA-ES";
@@ -215,9 +245,14 @@ const $ = (id) => document.getElementById(id);
   });
 
   // ---- akış ----
-  // 1) ilk kareyi anında göster (gecikmesiz), kısa bir preload fazı başlat
-  swapTo(0);
-  startRotation();
+  // 1) Kritik ilk kareleri önce ısıt: açılışta "geç gelen görsel" hissini azaltır
+  const criticalUrls = ORDER.slice(0, Math.min(2, ORDER.length)).map((x) => x.src);
+  preloadCritical(criticalUrls).then(() => {
+    if (!dismissed) {
+      swapTo(0);
+      startRotation();
+    }
+  });
 
   // Yükleme sırasında daha canlı durum mesajları döndür
   const loadMessages = [

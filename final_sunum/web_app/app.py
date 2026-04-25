@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -604,7 +605,12 @@ def _airfield_rollout(theta, map_data, max_steps: int):
 
 
 def optimize_airfield(
-    map_data, *, n_iter: int = 25, max_steps: int = 100, seed: int = 42
+    map_data,
+    *,
+    n_iter: int = 25,
+    max_steps: int = 100,
+    seed: int = 42,
+    max_runtime_s: float = 14.0,
 ):
     theta0 = np.zeros(AIRFIELD_N_PARAMS, dtype=float)
     sigma0 = 0.5
@@ -626,7 +632,11 @@ def optimize_airfield(
     best_theta = theta0.copy()
 
     it = 0
+    t_start = time.perf_counter()
     while it < n_iter:
+        # Live ortamda worker timeout riskini azaltmak için süre bütçesi
+        if (time.perf_counter() - t_start) >= max_runtime_s:
+            break
         thetas = es.ask()
         rollouts = [_airfield_rollout(th, map_data, max_steps) for th in thetas]
         fitnesses = [r["fitness"] for r in rollouts]
@@ -686,15 +696,22 @@ def api_airfield():
     except (TypeError, ValueError) as exc:
         return jsonify({"error": f"bad parameters: {exc}"}), 400
 
-    n_iter = max(3, min(n_iter, 50))
-    max_steps = max(30, min(max_steps, 200))
+    n_iter = max(3, min(n_iter, 24))
+    max_steps = max(30, min(max_steps, 140))
     if difficulty not in ("easy", "medium", "hard"):
         difficulty = "easy"
 
-    map_data = make_airfield_map(seed=seed, difficulty=difficulty)
-    result = optimize_airfield(
-        map_data, n_iter=n_iter, max_steps=max_steps, seed=seed
-    )
+    try:
+        map_data = make_airfield_map(seed=seed, difficulty=difficulty)
+        result = optimize_airfield(
+            map_data,
+            n_iter=n_iter,
+            max_steps=max_steps,
+            seed=seed,
+            max_runtime_s=14.0,
+        )
+    except Exception as exc:
+        return jsonify({"error": f"airfield-run-failed: {exc}"}), 500
 
     return jsonify({
         "map": map_data,

@@ -850,36 +850,49 @@
   // API
   // ------------------------------------------------------------
   async function fetchRun() {
-    const nIter = Math.max(5, Math.min(parseInt(els.iter.value || "18", 10), 40));
-    const ctrl = new AbortController();
-    const timeoutId = setTimeout(() => ctrl.abort(), 45000);
-    const body = {
+    const nIter = Math.max(5, Math.min(parseInt(els.iter.value || "18", 10), 24));
+    const baseBody = {
       seed: parseInt(els.seed.value || "42", 10),
       difficulty: els.difficulty.value || "easy",
       n_iter: nIter,
       max_steps: 80,
     };
-    let resp;
-    try {
-      resp = await fetch("/api/airfield-cma", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        signal: ctrl.signal,
-      });
-    } catch (err) {
-      if (err && err.name === "AbortError") {
-        throw new Error("İstek zaman aşımına uğradı. İterasyon sayısını düşürüp tekrar deneyin.");
+    const attempts = [
+      baseBody,
+      { ...baseBody, difficulty: "easy", n_iter: Math.min(10, baseBody.n_iter), max_steps: 70 },
+    ];
+    let lastError = null;
+
+    for (let i = 0; i < attempts.length; i++) {
+      const body = attempts[i];
+      const ctrl = new AbortController();
+      const timeoutId = setTimeout(() => ctrl.abort(), 45000);
+      let resp;
+      try {
+        resp = await fetch("/api/airfield-cma", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+          signal: ctrl.signal,
+        });
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err && err.name === "AbortError") {
+          lastError = new Error("İstek zaman aşımına uğradı. İterasyon sayısını düşürüp tekrar deneyin.");
+          continue;
+        }
+        lastError = err instanceof Error ? err : new Error(String(err));
+        continue;
+      } finally {
+        clearTimeout(timeoutId);
       }
-      throw err;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-    if (!resp.ok) {
+
+      if (resp.ok) return resp.json();
       const txt = await resp.text().catch(() => "");
-      throw new Error(`HTTP ${resp.status}: ${txt || resp.statusText}`);
+      lastError = new Error(`HTTP ${resp.status}: ${txt || resp.statusText}`);
     }
-    return resp.json();
+
+    throw lastError || new Error("Demo çalıştırılamadı.");
   }
 
   async function onStart() {

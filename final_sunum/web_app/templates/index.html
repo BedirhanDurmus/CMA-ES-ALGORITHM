@@ -4,9 +4,17 @@
   <meta charset="utf-8">
   <title>CMA-ES | Nöro-Bulanık Optimizasyon Platformu</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {# Splash görsellerini erkenden indir (ilk açılışta geç yüklenmeyi azaltır) #}
+  <link rel="preload" as="image" href="{{ url_for('static', filename='splash/photo_chalkboard_wide.png') }}" fetchpriority="high">
+  <link rel="preload" as="image" href="{{ url_for('static', filename='splash/photo_classwiz_wide.png') }}">
+  <link rel="preload" as="image" href="{{ url_for('static', filename='splash/photo_stats_wide.png') }}">
+  <link rel="preload" as="image" href="{{ url_for('static', filename='splash/photo_integral_wide.png') }}">
+  <link rel="preload" as="image" href="{{ url_for('static', filename='splash/bench_surface_collage.png') }}">
+  <link rel="preload" as="image" href="{{ url_for('static', filename='splash/bench_surface_collage_mobile.png') }}">
 </head>
 <body>
   {# ---------------- Splash (foto carousel) ---------------- #}
