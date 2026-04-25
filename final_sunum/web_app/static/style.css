@@ -1759,6 +1759,10 @@ html, body {
   gap: 10px;
   min-width: 0;
 }
+.how-airfield-stage > .how-airfield-stats,
+.how-airfield-stage > .how-airfield-status {
+  margin-top: 4px;
+}
 .how-airfield-canvas {
   width: 100%;
   aspect-ratio: 3 / 2;

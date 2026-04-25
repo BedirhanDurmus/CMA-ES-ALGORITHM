@@ -866,6 +866,17 @@
                   <span class="how-airfield-legend-item how-airfield-legend-item--crash"><span class="dot"></span>çarpma</span>
                   <span class="how-airfield-legend-item how-airfield-legend-item--reached"><span class="dot"></span>ulaşan</span>
                 </div>
+                <div class="how-airfield-stats" id="airfieldStats">
+                  <div class="stat"><span class="k">Jenerasyon</span><span class="v" id="afStatIter">—</span></div>
+                  <div class="stat"><span class="k">En iyi skor</span><span class="v" id="afStatBest">—</span></div>
+                  <div class="stat"><span class="k">Şimdiki min</span><span class="v" id="afStatCur">—</span></div>
+                  <div class="stat"><span class="k">σ (CMA)</span><span class="v" id="afStatSigma">—</span></div>
+                  <div class="stat"><span class="k">Hedefe ulaşan</span><span class="v" id="afStatReached">—</span></div>
+                  <div class="stat"><span class="k">θ boyutu</span><span class="v" id="afStatDim">81</span></div>
+                  <div class="stat"><span class="k">Popülasyon</span><span class="v" id="afStatPop">—</span></div>
+                  <div class="stat"><span class="k">Değerlendirme</span><span class="v" id="afStatEval">—</span></div>
+                </div>
+                <p class="how-airfield-status" id="airfieldStatus" role="status" aria-live="polite">Başlat'a basarak CMA-ES eğitimini çalıştır. Uçaklar kendi kendine parkuru öğrenene kadar izleyebilirsin.</p>
               </div>
 
               <aside class="how-airfield-side">
@@ -898,22 +909,11 @@
                   </label>
                 </div>
 
-                <div class="how-airfield-stats" id="airfieldStats">
-                  <div class="stat"><span class="k">Jenerasyon</span><span class="v" id="afStatIter">—</span></div>
-                  <div class="stat"><span class="k">En iyi skor</span><span class="v" id="afStatBest">—</span></div>
-                  <div class="stat"><span class="k">Şimdiki min</span><span class="v" id="afStatCur">—</span></div>
-                  <div class="stat"><span class="k">σ (CMA)</span><span class="v" id="afStatSigma">—</span></div>
-                  <div class="stat"><span class="k">Hedefe ulaşan</span><span class="v" id="afStatReached">—</span></div>
-                  <div class="stat"><span class="k">θ boyutu</span><span class="v" id="afStatDim">81</span></div>
-                  <div class="stat"><span class="k">Popülasyon</span><span class="v" id="afStatPop">—</span></div>
-                  <div class="stat"><span class="k">Değerlendirme</span><span class="v" id="afStatEval">—</span></div>
-                </div>
-
                 <div class="how-airfield-nn">
                   <div class="how-airfield-subtitle">En iyi bireyin sinir ağı</div>
                   <svg id="airfieldNN" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet"
                        xmlns="http://www.w3.org/2000/svg" aria-label="MLP ağırlık görünümü"></svg>
-                  <p class="how-airfield-subnote">Çizgi kalınlığı ∝ |w|, renk ağırlığın işaretini gösterir. CMA-ES her jenerasyonda θ'yı günceller; burada en iyi bireyin ağı canlı olarak izlenir.</p>
+                  <p class="how-airfield-subnote">Yorumlama: <strong>kalın çizgi = güçlü bağlantı (|w| büyük)</strong>, ince çizgi = zayıf bağlantı. <strong>Camgöbeği/mavi tonlar pozitif ağırlık</strong>, <strong>kırmızı/pembe tonlar negatif ağırlık</strong> etkisini gösterir. Her jenerasyonda CMA-ES bu ağırlıkları güncelledikçe ağın karar verme yapısı değişir.</p>
                 </div>
 
                 <div class="how-airfield-spark">
@@ -921,7 +921,6 @@
                   <canvas id="airfieldSpark" width="300" height="90"></canvas>
                 </div>
 
-                <p class="how-airfield-status" id="airfieldStatus" role="status" aria-live="polite">Başlat'a basarak CMA-ES eğitimini çalıştır. Uçaklar kendi kendine parkuru öğrenene kadar izleyebilirsin.</p>
               </aside>
             </div>
           </article>
